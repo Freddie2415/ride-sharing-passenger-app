@@ -7,11 +7,15 @@ import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/widgets.dart';
 
 class OtpScreen extends StatefulWidget {
-  final String phoneNumber;
+  /// Phone number in API format: +1XXXXXXXXXX
+  final String apiPhone;
+  /// Phone number for display: +1 (XXX) XXX-XXXX
+  final String displayPhone;
 
   const OtpScreen({
     super.key,
-    required this.phoneNumber,
+    required this.apiPhone,
+    required this.displayPhone,
   });
 
   @override
@@ -80,6 +84,8 @@ class _OtpScreenState extends State<OtpScreen> {
     });
 
     // Mock verification - always succeeds for UI demo
+    // Real API call: POST /api/v1/auth/verify-otp
+    // Body: { phone: widget.apiPhone, code: _otpController.text, app_type: "passenger" }
     await Future.delayed(const Duration(seconds: 1));
 
     if (mounted) {
@@ -87,17 +93,11 @@ class _OtpScreenState extends State<OtpScreen> {
         _isVerifying = false;
       });
 
-      // Mock: navigate to home (for now just show success)
-      // In real app: check is_new_user and navigate accordingly
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Verification successful! (Mock)'),
-          backgroundColor: AppColors.success,
-        ),
-      );
-
-      // For demo, just pop back
-      // Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+      // Mock: is_new_user = true, navigate to profile setup
+      // In real app: check is_new_user from API response
+      // if is_new_user -> /profile-setup
+      // else -> /home
+      context.go('/profile-setup');
     }
   }
 
@@ -172,7 +172,7 @@ class _OtpScreenState extends State<OtpScreen> {
                   children: [
                     const TextSpan(text: 'We sent a code to '),
                     TextSpan(
-                      text: widget.phoneNumber,
+                      text: widget.displayPhone,
                       style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         color: AppColors.gray900,

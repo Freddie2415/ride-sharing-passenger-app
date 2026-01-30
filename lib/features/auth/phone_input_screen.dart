@@ -38,7 +38,15 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
 
   void _onGetCodePressed() {
     if (_isButtonEnabled) {
-      context.push('/otp', extra: '+1 ${_phoneController.text}');
+      // API format: +1XXXXXXXXXX (no spaces, brackets, dashes)
+      final digitsOnly = _phoneController.text.replaceAll(RegExp(r'[^\d]'), '');
+      final apiPhone = '+1$digitsOnly';
+      // Display format for UI: +1 (XXX) XXX-XXXX
+      final displayPhone = '+1 ${_phoneController.text}';
+      context.push('/otp', extra: {
+        'apiPhone': apiPhone,
+        'displayPhone': displayPhone,
+      });
     }
   }
 

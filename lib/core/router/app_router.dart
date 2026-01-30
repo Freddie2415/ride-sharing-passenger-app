@@ -4,6 +4,7 @@ import '../../features/splash/splash_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/auth/phone_input_screen.dart';
 import '../../features/auth/otp_screen.dart';
+import '../../features/registration/profile_setup_screen.dart';
 
 class AppRouter {
   AppRouter._();
@@ -33,9 +34,17 @@ class AppRouter {
         path: '/otp',
         name: 'otp',
         builder: (context, state) {
-          final phoneNumber = state.extra as String? ?? '+1 (555) 123-4567';
-          return OtpScreen(phoneNumber: phoneNumber);
+          final data = state.extra as Map<String, String>? ?? {};
+          return OtpScreen(
+            apiPhone: data['apiPhone'] ?? '+15551234567',
+            displayPhone: data['displayPhone'] ?? '+1 (555) 123-4567',
+          );
         },
+      ),
+      GoRoute(
+        path: '/profile-setup',
+        name: 'profile-setup',
+        builder: (context, state) => const ProfileSetupScreen(),
       ),
     ],
   );

@@ -45,7 +45,17 @@
 
 ---
 
-### Фаза 1.3: Регистрация пассажира
+### Фаза 1.3: Регистрация пассажира ✅
+
+## Задача (выполнено)
+- [x] ProfileSetupScreen (имя, email, фото)
+
+---
+
+### Фаза 1.4: Главная и Поиск
 
 ## Задача
-- [ ] ProfileSetupScreen (имя, email, фото)
+- [ ] MainShell (Bottom Navigation)
+- [ ] HomeScreen (поиск поездок)
+- [ ] SearchResultsScreen
+- [ ] FiltersScreen
