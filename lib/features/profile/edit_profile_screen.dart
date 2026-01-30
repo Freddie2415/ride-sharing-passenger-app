@@ -5,15 +5,16 @@ import 'package:image_picker/image_picker.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/widgets.dart';
+import '../../core/mocks/mock_data.dart';
 
-class ProfileSetupScreen extends StatefulWidget {
-  const ProfileSetupScreen({super.key});
+class EditProfileScreen extends StatefulWidget {
+  const EditProfileScreen({super.key});
 
   @override
-  State<ProfileSetupScreen> createState() => _ProfileSetupScreenState();
+  State<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
-class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
+class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -23,6 +24,22 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
   bool _isLoading = false;
   File? _avatarFile;
+  String? _networkAvatarUrl;
+  bool _hasChanges = false;
+  bool _avatarChanged = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Load current user data
+    final user = MockData.user;
+    _nameController.text = user['name'] as String? ?? '';
+    _emailController.text = user['email'] as String? ?? '';
+    _networkAvatarUrl = user['avatar'] as String?;
+
+    _nameController.addListener(_onFieldChanged);
+    _emailController.addListener(_onFieldChanged);
+  }
 
   @override
   void dispose() {
@@ -33,9 +50,23 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     super.dispose();
   }
 
+  void _onFieldChanged() {
+    final user = MockData.user;
+    final hasChanges = _nameController.text != (user['name'] as String? ?? '') ||
+        _emailController.text != (user['email'] as String? ?? '') ||
+        _avatarChanged;
+    if (hasChanges != _hasChanges) {
+      setState(() {
+        _hasChanges = hasChanges;
+      });
+    }
+  }
+
   bool get _isFormValid => _nameController.text.trim().isNotEmpty;
 
   Future<void> _onPickAvatar() async {
+    final hasAvatar = _avatarFile != null || _networkAvatarUrl != null;
+
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -59,7 +90,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               ),
               const SizedBox(height: AppSpacing.xl),
               Text(
-                _avatarFile != null ? 'Change Photo' : 'Add Photo',
+                hasAvatar ? 'Change Photo' : 'Add Photo',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: AppSpacing.xl),
@@ -99,7 +130,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   await _pickImage(ImageSource.gallery);
                 },
               ),
-              if (_avatarFile != null)
+              if (hasAvatar)
                 ListTile(
                   leading: Container(
                     padding: const EdgeInsets.all(AppSpacing.md),
@@ -117,6 +148,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                     Navigator.pop(context);
                     setState(() {
                       _avatarFile = null;
+                      _networkAvatarUrl = null;
+                      _avatarChanged = true;
+                      _hasChanges = true;
                     });
                   },
                 ),
@@ -139,6 +173,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       if (image != null) {
         setState(() {
           _avatarFile = File(image.path);
+          _networkAvatarUrl = null;
+          _avatarChanged = true;
+          _hasChanges = true;
         });
       }
     } catch (e) {
@@ -157,17 +194,15 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     }
   }
 
-  Future<void> _onContinue() async {
+  Future<void> _onSave() async {
     if (!_isFormValid) return;
 
     setState(() {
       _isLoading = true;
     });
 
-    // Mock registration delay
-    // Real API flow:
-    // 1. POST /api/v1/passenger/register { name, email }
-    // 2. If avatar selected: PUT /api/v1/passenger/profile (multipart with avatar)
+    // Mock: PUT /api/v1/passenger/profile
+    // Real API: multipart/form-data with name, email, avatar
     await Future.delayed(const Duration(seconds: 1));
 
     if (mounted) {
@@ -175,28 +210,29 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         _isLoading = false;
       });
 
-      // Mock: Show success and navigate to home
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Profile created successfully! (Mock)'),
+          content: Text('Profile updated successfully! (Mock)'),
           backgroundColor: AppColors.success,
         ),
       );
 
-      // Navigate to main app
-      context.go('/home');
+      context.pop();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final user = MockData.user;
+    final phone = user['phone'] as String? ?? '';
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
-        title: const Text('Create Account'),
+        title: const Text('Personal Info'),
       ),
       body: SafeArea(
         child: Form(
@@ -212,66 +248,101 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: AppSpacing.xl),
-                      // Title
-                      Text(
-                        'Tell us about yourself',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ),
-                      const SizedBox(height: AppSpacing.xxxl),
                       // Avatar
                       Center(
                         child: AvatarPicker(
                           imageFile: _avatarFile,
+                          networkImageUrl: _networkAvatarUrl,
                           onTap: _onPickAvatar,
-                          label: _avatarFile != null ? 'Change photo' : 'Add photo',
+                          label: 'Change photo',
                         ),
                       ),
                       const SizedBox(height: AppSpacing.xxxl),
-                      // Full Name field
+                      // Name field
                       AppTextField(
                         controller: _nameController,
                         focusNode: _nameFocusNode,
-                        label: 'Full Name *',
+                        label: 'Name',
                         hint: 'John Smith',
                         textCapitalization: TextCapitalization.words,
                         textInputAction: TextInputAction.next,
-                        onChanged: (_) => setState(() {}),
                         onSubmitted: (_) {
                           _emailFocusNode.requestFocus();
                         },
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+                      // Phone field (read-only)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Phone',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w500,
+                                ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.lg,
+                              vertical: AppSpacing.lg,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.gray100,
+                              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                              border: Border.all(color: AppColors.gray200),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    phone,
+                                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                          color: AppColors.gray600,
+                                        ),
+                                  ),
+                                ),
+                                const Icon(
+                                  Icons.check_circle,
+                                  color: AppColors.success,
+                                  size: 20,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            'Contact support to change',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: AppColors.gray500,
+                                ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: AppSpacing.xl),
                       // Email field
                       AppTextField(
                         controller: _emailController,
                         focusNode: _emailFocusNode,
-                        label: 'Email (optional)',
+                        label: 'Email',
                         hint: 'john@example.com',
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.done,
-                        onSubmitted: (_) => _onContinue(),
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      Text(
-                        'For receipts and notifications',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.gray500,
-                            ),
+                        onSubmitted: (_) => _onSave(),
                       ),
                     ],
                   ),
                 ),
               ),
-              // Continue button
+              // Save button
               Padding(
                 padding: const EdgeInsets.all(AppSpacing.screenPadding),
                 child: AppButton(
-                  onPressed: _isFormValid && !_isLoading ? _onContinue : null,
-                  label: 'Continue',
+                  onPressed: _isFormValid && _hasChanges && !_isLoading ? _onSave : null,
+                  label: 'Save',
                   isLoading: _isLoading,
-                  isDisabled: !_isFormValid,
+                  isDisabled: !_isFormValid || !_hasChanges,
                 ),
               ),
             ],

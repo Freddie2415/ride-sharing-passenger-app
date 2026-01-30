@@ -33,29 +33,31 @@
 4. Пиши чистый Dart код
 5. После задачи обнови PROJECT_ROADMAP.md (отметь ✅)
 
+## Выполнено
+
+- [x] Фаза 1.1: Подготовка (тема, компоненты, mock данные)
+- [x] Фаза 1.2: Онбординг и Авторизация (Splash, Onboarding, PhoneInput, OTP)
+- [x] Фаза 1.3: Регистрация пассажира (ProfileSetupScreen)
+
+---
+
 ## Текущий этап
 
-### Фаза 1.2: Онбординг и Авторизация ✅
+### Фаза 1.4-A: Навигация + Профиль (по API)
 
-## Задача (выполнено)
-- [x] SplashScreen
-- [x] OnboardingScreen (3 слайда)
-- [x] PhoneInputScreen
-- [x] OtpScreen
-
----
-
-### Фаза 1.3: Регистрация пассажира ✅
-
-## Задача (выполнено)
-- [x] ProfileSetupScreen (имя, email, фото)
-
----
-
-### Фаза 1.4: Главная и Поиск
+Делаем экраны которые соответствуют текущему API (`api-1.json`):
 
 ## Задача
-- [ ] MainShell (Bottom Navigation)
-- [ ] HomeScreen (поиск поездок)
-- [ ] SearchResultsScreen
-- [ ] FiltersScreen
+- [x] MainShell (Bottom Navigation: Search, Trips, Chats, Profile)
+- [x] ProfileScreen (GET /passenger/profile) - просмотр профиля
+- [x] EditProfileScreen (PUT /passenger/profile) - редактирование (name, email, avatar)
+- [x] SettingsScreen (logout, logout-all)
+
+## API эндпоинты для этих экранов:
+- `GET /api/v1/passenger/profile` - получить профиль
+- `PUT /api/v1/passenger/profile` - обновить профиль (multipart: name, email, avatar)
+- `POST /api/v1/auth/logout` - выход
+- `POST /api/v1/auth/logout-all` - выход со всех устройств
+
+## Навигация после регистрации:
+ProfileSetupScreen → MainShell (вкладка Search/Home)
