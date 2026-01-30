@@ -23,6 +23,7 @@
 1. `docs/UI_UX_PLAN.md` - wireframes всех экранов
 2. `docs/DESIGN_SYSTEM.md` - цвета (Teal), шрифты, компоненты
 3. `docs/PROJECT_ROADMAP.md` - текущий статус и план
+4. `api-1.json` - api
 
 ## Правила
 
@@ -34,14 +35,17 @@
 
 ## Текущий этап
 
-Фаза 1.1: Подготовка
+### Фаза 1.2: Онбординг и Авторизация ✅
+
+## Задача (выполнено)
+- [x] SplashScreen
+- [x] OnboardingScreen (3 слайда)
+- [x] PhoneInputScreen
+- [x] OtpScreen
+
+---
+
+### Фаза 1.3: Регистрация пассажира
 
 ## Задача
-
-[] Структура папок
-
-[] Установка пакетов (UI only)
-
-[] AppTheme (светлая + тёмная) - Teal
-
-[] Базовые UI компоненты (кнопки, инпуты, карточки
+- [ ] ProfileSetupScreen (имя, email, фото)
