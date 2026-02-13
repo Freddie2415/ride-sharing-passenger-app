@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:passenger/main.dart';
+import 'package:passenger/app/app.dart';
 
 void main() {
   testWidgets('App should start', (WidgetTester tester) async {

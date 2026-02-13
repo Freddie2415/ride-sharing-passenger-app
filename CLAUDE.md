@@ -157,7 +157,7 @@ abstract class AppRoutes {
   static const trips = '/trips';
   static const chats = '/chats';
   static const profile = '/profile';
-  // ...
+// ...
 }
 ```
 
@@ -244,7 +244,7 @@ abstract class AuthService {
 class AuthServiceImpl implements AuthService {
   AuthServiceImpl(this._dio);
   final Dio _dio;
-  // ...
+// ...
 }
 ```
 
@@ -346,6 +346,12 @@ lib/features/<feature_name>/
     └── <widget_name>.dart
 ```
 
+**Strict rules:**
+- ❌ NEVER place `*_screen.dart` files directly in the feature root — ALWAYS in `screens/`
+- ❌ NEVER place reusable feature widgets directly in the feature root — ALWAYS in `widgets/`
+- `cubit/`, `screens/` directories are created immediately with the feature
+- `widgets/` directory is created when the feature has its first reusable widget
+
 If the feature needs an API:
 ```
 lib/core/services/
@@ -435,30 +441,6 @@ Reusable components: `AppButton` (primary/secondary/text + loading), `AppTextFie
 - Tokens: `flutter_secure_storage` only
 - No sensitive data in logs
 - Input validation on client + server
-
-## Current Status
-
-Early stage. Existing UI screens (splash, onboarding, auth, registration, profile) use local `StatefulWidget` state and mock data. No backend integration yet. Migration needed: replace `StatefulWidget` state with Cubits, add injectable DI, add network layer, integrate freezed models. The `.claude/commands/`, `.claude/agents/`, and `.claude/settings.json` are configured for professional development workflow.
-
-## Migration Plan (from current state to target architecture)
-
-### Step 1: Add dependencies
-Add to `pubspec.yaml`: `flutter_bloc`, `get_it`, `injectable`, `injectable_generator`, `freezed`, `freezed_annotation`, `json_serializable`, `json_annotation`, `build_runner`, `dio`, `flutter_secure_storage`, `cached_network_image`, `mocktail`
-
-### Step 2: Set up DI (injectable + get_it)
-Create `lib/app/di/injection.dart`, register Dio and FlutterSecureStorage as modules.
-
-### Step 3: Set up network layer
-Copy and adapt from driver app: `ApiClient`, `AuthInterceptor`, `ApiExceptions`, `ConnectivityService`, `mapDioException()`.
-
-### Step 4: Migrate auth flow
-Replace `StatefulWidget` state → `AuthCubit` + `AuthService` + freezed state/models.
-
-### Step 5: Migrate remaining screens
-Replace local state with Cubits for: splash, registration, profile.
-
-### Step 6: Add tests
-Model tests, cubit tests, network tests following driver app patterns.
 
 ## Related Projects
 

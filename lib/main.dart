@@ -1,31 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'core/theme/app_theme.dart';
-import 'core/router/app_router.dart';
+import 'package:passenger/app/app.dart';
+import 'package:passenger/app/di/injection.dart';
+import 'package:passenger/core/network/connectivity_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  SystemChrome.setPreferredOrientations([
+  await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
+  await configureDependencies();
+  await getIt<ConnectivityService>().initialize();
+
   runApp(const PassengerApp());
-}
-
-class PassengerApp extends StatelessWidget {
-  const PassengerApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'Intercity Rideshare',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-      routerConfig: AppRouter.router,
-    );
-  }
 }

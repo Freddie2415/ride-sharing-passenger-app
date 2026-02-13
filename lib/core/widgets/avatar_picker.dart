@@ -1,24 +1,25 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../theme/app_colors.dart';
-import '../constants/app_spacing.dart';
+
+import 'package:passenger/core/constants/app_spacing.dart';
+import 'package:passenger/core/theme/app_colors.dart';
 
 class AvatarPicker extends StatelessWidget {
+  const AvatarPicker({
+    required this.onTap,
+    super.key,
+    this.imageFile,
+    this.networkImageUrl,
+    this.size = 100,
+    this.label = 'Add photo',
+  });
   final File? imageFile;
   final String? networkImageUrl;
   final VoidCallback onTap;
   final double size;
   final String label;
-
-  const AvatarPicker({
-    super.key,
-    this.imageFile,
-    this.networkImageUrl,
-    required this.onTap,
-    this.size = 100,
-    this.label = 'Add photo',
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -34,12 +35,13 @@ class AvatarPicker extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.gray100,
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.gray200,
-                    width: 2,
-                  ),
+                  border: Border.all(color: AppColors.gray200, width: 2),
                 ),
-                child: _buildAvatarContent(),
+                child: _AvatarContent(
+                  imageFile: imageFile,
+                  networkImageUrl: networkImageUrl,
+                  size: size,
+                ),
               ),
               Positioned(
                 right: 0,
@@ -49,10 +51,7 @@ class AvatarPicker extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppColors.primary600,
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white,
-                      width: 2,
-                    ),
+                    border: Border.all(color: Colors.white, width: 2),
                   ),
                   child: const Icon(
                     Icons.camera_alt,
@@ -69,48 +68,13 @@ class AvatarPicker extends StatelessWidget {
           onTap: onTap,
           child: Text(
             label,
-            style: TextStyle(
+            style: const TextStyle(
               color: AppColors.primary600,
               fontWeight: FontWeight.w500,
             ),
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildAvatarContent() {
-    if (imageFile != null) {
-      return ClipOval(
-        child: Image.file(
-          imageFile!,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-        ),
-      );
-    }
-
-    if (networkImageUrl != null && networkImageUrl!.isNotEmpty) {
-      return ClipOval(
-        child: Image.network(
-          networkImageUrl!,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => const Icon(
-            Icons.person,
-            size: 50,
-            color: AppColors.gray400,
-          ),
-        ),
-      );
-    }
-
-    return const Icon(
-      Icons.person_outline,
-      size: 50,
-      color: AppColors.gray400,
     );
   }
 
@@ -122,9 +86,9 @@ class AvatarPicker extends StatelessWidget {
   }) async {
     final picker = ImagePicker();
     File? result;
-    bool removed = false;
+    var isRemoved = false;
 
-    await showModalBottomSheet(
+    await showModalBottomSheet<void>(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
@@ -167,7 +131,7 @@ class AvatarPicker extends StatelessWidget {
                 onTap: () async {
                   Navigator.pop(context);
                   try {
-                    final XFile? photo = await picker.pickImage(
+                    final photo = await picker.pickImage(
                       source: ImageSource.camera,
                       maxWidth: 512,
                       maxHeight: 512,
@@ -176,8 +140,8 @@ class AvatarPicker extends StatelessWidget {
                     if (photo != null) {
                       result = File(photo.path);
                     }
-                  } catch (e) {
-                    debugPrint('Camera error: $e');
+                  } on Exception catch (_) {
+                    // Camera unavailable or permission denied
                   }
                 },
               ),
@@ -197,7 +161,7 @@ class AvatarPicker extends StatelessWidget {
                 onTap: () async {
                   Navigator.pop(context);
                   try {
-                    final XFile? image = await picker.pickImage(
+                    final image = await picker.pickImage(
                       source: ImageSource.gallery,
                       maxWidth: 512,
                       maxHeight: 512,
@@ -206,8 +170,8 @@ class AvatarPicker extends StatelessWidget {
                     if (image != null) {
                       result = File(image.path);
                     }
-                  } catch (e) {
-                    debugPrint('Gallery error: $e');
+                  } on Exception catch (_) {
+                    // Gallery unavailable or permission denied
                   }
                 },
               ),
@@ -227,7 +191,7 @@ class AvatarPicker extends StatelessWidget {
                   title: const Text('Remove Photo'),
                   onTap: () {
                     Navigator.pop(context);
-                    removed = true;
+                    isRemoved = true;
                   },
                 ),
               const SizedBox(height: AppSpacing.lg),
@@ -237,10 +201,45 @@ class AvatarPicker extends StatelessWidget {
       ),
     );
 
-    // Return null to indicate removal, otherwise return the result
-    if (removed) {
-      return null;
-    }
+    if (isRemoved) return null;
     return result ?? currentImage;
+  }
+}
+
+class _AvatarContent extends StatelessWidget {
+  const _AvatarContent({
+    this.imageFile,
+    this.networkImageUrl,
+    this.size = 100,
+  });
+
+  final File? imageFile;
+  final String? networkImageUrl;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final file = imageFile;
+    if (file != null) {
+      return ClipOval(
+        child: Image.file(file, width: size, height: size, fit: BoxFit.cover),
+      );
+    }
+
+    final url = networkImageUrl;
+    if (url != null && url.isNotEmpty) {
+      return ClipOval(
+        child: Image.network(
+          url,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) =>
+              const Icon(Icons.person, size: 50, color: AppColors.gray400),
+        ),
+      );
+    }
+
+    return const Icon(Icons.person_outline, size: 50, color: AppColors.gray400);
   }
 }

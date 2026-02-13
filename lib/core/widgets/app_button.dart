@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
-import '../constants/app_spacing.dart';
-import '../theme/app_colors.dart';
+
+import 'package:passenger/core/constants/app_spacing.dart';
 
 enum AppButtonVariant { primary, secondary, text }
 
 enum AppButtonSize { small, medium, large }
 
+enum IconPosition { left, right }
+
 class AppButton extends StatelessWidget {
   const AppButton({
-    super.key,
     required this.onPressed,
     required this.label,
+    super.key,
     this.variant = AppButtonVariant.primary,
     this.size = AppButtonSize.medium,
     this.icon,
@@ -56,7 +58,7 @@ class AppButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final effectiveOnPressed = isDisabled || isLoading ? null : onPressed;
 
-    Widget child = isLoading
+    final child = isLoading
         ? SizedBox(
             height: 20,
             width: 20,
@@ -69,7 +71,11 @@ class AppButton extends StatelessWidget {
               ),
             ),
           )
-        : _buildContent(context);
+        : _AppButtonContent(
+            label: label,
+            icon: icon,
+            iconPosition: iconPosition,
+          );
 
     switch (variant) {
       case AppButtonVariant.primary:
@@ -105,93 +111,39 @@ class AppButton extends StatelessWidget {
           height: _height,
           child: TextButton(
             onPressed: effectiveOnPressed,
-            style: TextButton.styleFrom(
-              padding: _padding,
-            ),
+            style: TextButton.styleFrom(padding: _padding),
             child: child,
           ),
         );
     }
   }
-
-  Widget _buildContent(BuildContext context) {
-    if (icon == null) {
-      return Text(label);
-    }
-
-    final iconWidget = Icon(icon, size: 20);
-    final textWidget = Text(label);
-
-    if (iconPosition == IconPosition.left) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          iconWidget,
-          const SizedBox(width: AppSpacing.sm),
-          textWidget,
-        ],
-      );
-    } else {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          textWidget,
-          const SizedBox(width: AppSpacing.sm),
-          iconWidget,
-        ],
-      );
-    }
-  }
 }
 
-enum IconPosition { left, right }
-
-class AppIconButton extends StatelessWidget {
-  const AppIconButton({
-    super.key,
-    required this.onPressed,
-    required this.icon,
-    this.size = 48,
-    this.iconSize = 24,
-    this.backgroundColor,
-    this.iconColor,
-    this.isDisabled = false,
+class _AppButtonContent extends StatelessWidget {
+  const _AppButtonContent({
+    required this.label,
+    this.icon,
+    this.iconPosition = IconPosition.left,
   });
 
-  final VoidCallback? onPressed;
-  final IconData icon;
-  final double size;
-  final double iconSize;
-  final Color? backgroundColor;
-  final Color? iconColor;
-  final bool isDisabled;
+  final String label;
+  final IconData? icon;
+  final IconPosition iconPosition;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final iconData = icon;
+    if (iconData == null) return Text(label);
 
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Material(
-        color: backgroundColor ?? Colors.transparent,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        child: InkWell(
-          onTap: isDisabled ? null : onPressed,
-          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          child: Center(
-            child: Icon(
-              icon,
-              size: iconSize,
-              color: isDisabled
-                  ? AppColors.gray400
-                  : iconColor ?? theme.colorScheme.onSurface,
-            ),
-          ),
-        ),
-      ),
+    final iconWidget = Icon(iconData, size: 20);
+    final textWidget = Text(label);
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: iconPosition == IconPosition.left
+          ? [iconWidget, const SizedBox(width: AppSpacing.sm), textWidget]
+          : [textWidget, const SizedBox(width: AppSpacing.sm), iconWidget],
     );
   }
 }

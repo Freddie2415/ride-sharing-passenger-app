@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'app_colors.dart';
-import 'app_text_styles.dart';
-import '../constants/app_spacing.dart';
+import 'package:passenger/core/constants/app_spacing.dart';
+import 'package:passenger/core/theme/app_colors.dart';
+import 'package:passenger/core/theme/app_text_styles.dart';
 
 class AppTheme {
   AppTheme._();
@@ -13,19 +13,16 @@ class AppTheme {
     brightness: Brightness.light,
     colorScheme: const ColorScheme.light(
       primary: AppColors.primary600,
-      onPrimary: Colors.white,
       primaryContainer: AppColors.primary50,
       onPrimaryContainer: AppColors.primary900,
       secondary: AppColors.gray600,
       onSecondary: Colors.white,
       secondaryContainer: AppColors.gray100,
       onSecondaryContainer: AppColors.gray900,
-      surface: AppColors.surfaceLight,
       onSurface: AppColors.onSurfaceLight,
       surfaceContainerHighest: AppColors.surfaceVariantLight,
       onSurfaceVariant: AppColors.onSurfaceVariantLight,
       error: AppColors.error,
-      onError: Colors.white,
       outline: AppColors.outlineLight,
       outlineVariant: AppColors.gray200,
     ),
@@ -147,12 +144,8 @@ class AppTheme {
       labelStyle: AppTextStyles.bodyMedium.copyWith(
         color: AppColors.onSurfaceVariantLight,
       ),
-      hintStyle: AppTextStyles.bodyMedium.copyWith(
-        color: AppColors.gray500,
-      ),
-      errorStyle: AppTextStyles.bodySmall.copyWith(
-        color: AppColors.error,
-      ),
+      hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.gray500),
+      errorStyle: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: AppColors.surfaceLight,
@@ -161,7 +154,10 @@ class AppTheme {
       type: BottomNavigationBarType.fixed,
       elevation: 8,
       selectedLabelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-      unselectedLabelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w400),
+      unselectedLabelStyle: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+      ),
     ),
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: AppColors.surfaceLight,
@@ -231,19 +227,15 @@ class AppTheme {
     brightness: Brightness.dark,
     colorScheme: const ColorScheme.dark(
       primary: AppColors.primary400,
-      onPrimary: Colors.black,
       primaryContainer: AppColors.primary900,
       onPrimaryContainer: AppColors.primary100,
       secondary: AppColors.gray400,
-      onSecondary: Colors.black,
       secondaryContainer: AppColors.gray800,
       onSecondaryContainer: AppColors.gray100,
       surface: AppColors.surfaceDark,
-      onSurface: AppColors.onSurfaceDark,
       surfaceContainerHighest: AppColors.surfaceVariantDark,
       onSurfaceVariant: AppColors.onSurfaceVariantDark,
       error: AppColors.errorDark,
-      onError: Colors.black,
       outline: AppColors.outlineDark,
       outlineVariant: AppColors.gray700,
     ),
@@ -365,12 +357,8 @@ class AppTheme {
       labelStyle: AppTextStyles.bodyMedium.copyWith(
         color: AppColors.onSurfaceVariantDark,
       ),
-      hintStyle: AppTextStyles.bodyMedium.copyWith(
-        color: AppColors.gray500,
-      ),
-      errorStyle: AppTextStyles.bodySmall.copyWith(
-        color: AppColors.errorDark,
-      ),
+      hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.gray500),
+      errorStyle: AppTextStyles.bodySmall.copyWith(color: AppColors.errorDark),
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: AppColors.surfaceDark,
@@ -379,7 +367,10 @@ class AppTheme {
       type: BottomNavigationBarType.fixed,
       elevation: 0,
       selectedLabelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-      unselectedLabelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w400),
+      unselectedLabelStyle: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+      ),
     ),
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: AppColors.surfaceDark,
