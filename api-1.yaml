@@ -1,0 +1,3330 @@
+openapi: 3.0.3
+info:
+  title: Intercity Taxi API
+  description: REST API for Driver and Passenger mobile applications
+  version: 1.0.0
+servers:
+  - url: http://localhost
+tags:
+  - name: Authentication
+    description: |-
+      
+      APIs for user authentication via phone OTP
+  - name: Passenger
+    description: |-
+      
+      APIs for passenger profile management
+  - name: Device
+    description: |-
+      
+      APIs for managing push notification device tokens
+  - name: Common
+    description: ""
+  - name: Driver Onboarding
+    description: |-
+      
+      APIs for unified driver onboarding process.
+      This replaces the multi-step registration with a single onboarding wizard.
+  - name: Driver Profile
+    description: |-
+      
+      APIs for managing driver profile (approved/suspended drivers)
+  - name: Other
+    description: ""
+components:
+  securitySchemes:
+    default:
+      type: http
+      scheme: bearer
+      description: Get your token via `POST /api/v1/auth/verify-otp` after OTP verification.
+security:
+  - default: []
+paths:
+  /api/v1/auth/send-otp:
+    post:
+      summary: Send OTP
+      operationId: sendOTP
+      description: |-
+        Send a one-time password to the specified phone number.
+        The OTP is valid for 5 minutes and allows up to 5 verification attempts.
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  data:
+                    message: Verification code sent
+                    expires_in: 300
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Verification code sent
+                      expires_in:
+                        type: integer
+                        example: 300
+        "422":
+          description: Invalid phone format
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: Validation failed
+                  errors:
+                    phone:
+                      - "Phone must be in US format: +1XXXXXXXXXX"
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Validation failed
+                  errors:
+                    type: object
+                    properties:
+                      phone:
+                        type: array
+                        example:
+                          - "Phone must be in US format: +1XXXXXXXXXX"
+                        items:
+                          type: string
+        "429":
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: Please wait 45 seconds before requesting a new code
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Please wait 45 seconds before requesting a new code
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone:
+                  type: string
+                  description: Phone number in US format (+1XXXXXXXXXX).
+                  example: "+12025551234"
+              required:
+                - phone
+      security: []
+  /api/v1/auth/verify-otp:
+    post:
+      summary: Verify OTP
+      operationId: verifyOTP
+      description: |-
+        Verify the OTP code and receive an authentication token.
+        If the user doesn't exist, a new account will be created automatically.
+
+        **Important:** By signing in or creating an account, the user agrees to
+        the Terms of Service and Privacy Policy.
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - description: Success - existing user
+                    type: object
+                    example:
+                      success: true
+                      data:
+                        user:
+                          uuid: 550e8400-e29b-41d4-a716-446655440000
+                          name: John Doe
+                          email: john@example.com
+                          phone: "+12025551234"
+                          avatar: null
+                          locale: en
+                          timezone: America/New_York
+                          phone_verified: true
+                          email_verified: false
+                          roles:
+                            - passenger
+                          created_at: 2026-01-24T10:00:00+00:00
+                        is_new_user: false
+                        has_driver_profile: false
+                      meta:
+                        token: 1|abc123...
+                        token_type: Bearer
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        type: object
+                        properties:
+                          user:
+                            type: object
+                            properties:
+                              uuid:
+                                type: string
+                                example: 550e8400-e29b-41d4-a716-446655440000
+                              name:
+                                type: string
+                                example: John Doe
+                              email:
+                                type: string
+                                example: john@example.com
+                              phone:
+                                type: string
+                                example: "+12025551234"
+                              avatar:
+                                type: string
+                                example: null
+                              locale:
+                                type: string
+                                example: en
+                              timezone:
+                                type: string
+                                example: America/New_York
+                              phone_verified:
+                                type: boolean
+                                example: true
+                              email_verified:
+                                type: boolean
+                                example: false
+                              roles:
+                                type: array
+                                example:
+                                  - passenger
+                                items:
+                                  type: string
+                              created_at:
+                                type: string
+                                example: 2026-01-24T10:00:00+00:00
+                          is_new_user:
+                            type: boolean
+                            example: false
+                          has_driver_profile:
+                            type: boolean
+                            example: false
+                      meta:
+                        type: object
+                        properties:
+                          token:
+                            type: string
+                            example: 1|abc123...
+                          token_type:
+                            type: string
+                            example: Bearer
+                  - description: Success - new user
+                    type: object
+                    example:
+                      success: true
+                      data:
+                        user:
+                          uuid: 550e8400-e29b-41d4-a716-446655440000
+                          name: User
+                          email: null
+                          phone: "+12025551234"
+                          avatar: null
+                          locale: en
+                          timezone: null
+                          phone_verified: true
+                          email_verified: false
+                          roles:
+                            - passenger
+                          created_at: 2026-01-24T10:00:00+00:00
+                        is_new_user: true
+                        has_driver_profile: false
+                      meta:
+                        token: 1|abc123...
+                        token_type: Bearer
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        type: object
+                        properties:
+                          user:
+                            type: object
+                            properties:
+                              uuid:
+                                type: string
+                                example: 550e8400-e29b-41d4-a716-446655440000
+                              name:
+                                type: string
+                                example: User
+                              email:
+                                type: string
+                                example: null
+                              phone:
+                                type: string
+                                example: "+12025551234"
+                              avatar:
+                                type: string
+                                example: null
+                              locale:
+                                type: string
+                                example: en
+                              timezone:
+                                type: string
+                                example: null
+                              phone_verified:
+                                type: boolean
+                                example: true
+                              email_verified:
+                                type: boolean
+                                example: false
+                              roles:
+                                type: array
+                                example:
+                                  - passenger
+                                items:
+                                  type: string
+                              created_at:
+                                type: string
+                                example: 2026-01-24T10:00:00+00:00
+                          is_new_user:
+                            type: boolean
+                            example: true
+                          has_driver_profile:
+                            type: boolean
+                            example: false
+                      meta:
+                        type: object
+                        properties:
+                          token:
+                            type: string
+                            example: 1|abc123...
+                          token_type:
+                            type: string
+                            example: Bearer
+        "422":
+          description: ""
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - description: Invalid code
+                    type: object
+                    example:
+                      success: false
+                      message: Invalid code. 4 attempts remaining.
+                    properties:
+                      success:
+                        type: boolean
+                        example: false
+                      message:
+                        type: string
+                        example: Invalid code. 4 attempts remaining.
+                  - description: Expired code
+                    type: object
+                    example:
+                      success: false
+                      message: No active verification code found. Please request a new one.
+                    properties:
+                      success:
+                        type: boolean
+                        example: false
+                      message:
+                        type: string
+                        example: No active verification code found. Please request a new one.
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone:
+                  type: string
+                  description: Phone number in US format (+1XXXXXXXXXX).
+                  example: "+12025551234"
+                code:
+                  type: string
+                  description: 6-digit OTP code.
+                  example: "123456"
+                app_type:
+                  type: string
+                  description: "Application type: `passenger` or `driver`. Defaults to
+                    `passenger`."
+                  example: passenger
+                device_name:
+                  type: string
+                  description: Device name for token identification.
+                  example: iPhone 15 Pro
+              required:
+                - phone
+                - code
+      security: []
+  /api/v1/auth/logout:
+    post:
+      summary: Logout
+      operationId: logout
+      description: Revoke the current authentication token.
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  data:
+                    message: Logged out successfully
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Logged out successfully
+        "401":
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: Unauthenticated
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Unauthenticated
+      tags:
+        - Authentication
+  /api/v1/auth/logout-all:
+    post:
+      summary: Logout from all devices
+      operationId: logoutFromAllDevices
+      description: |-
+        Revoke all authentication tokens for the current user.
+        This will log the user out from all devices.
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  data:
+                    message: Logged out from all devices
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Logged out from all devices
+        "401":
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: Unauthenticated
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Unauthenticated
+      tags:
+        - Authentication
+  /api/v1/passenger/register:
+    post:
+      summary: Complete registration
+      operationId: completeRegistration
+      description: >-
+        Complete the passenger registration by providing name fields and
+        optional email.
+
+        This should be called after OTP verification for new users.
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  data:
+                    user:
+                      uuid: 550e8400-e29b-41d4-a716-446655440000
+                      first_name: John
+                      middle_name: Michael
+                      last_name: Doe
+                      name: John Michael Doe
+                      email: john@example.com
+                      phone: "+12025551234"
+                      avatar: null
+                      locale: en
+                      timezone: null
+                      phone_verified: true
+                      email_verified: false
+                      roles:
+                        - passenger
+                      created_at: 2026-01-24T10:00:00+00:00
+                    message: Registration completed
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        type: object
+                        properties:
+                          uuid:
+                            type: string
+                            example: 550e8400-e29b-41d4-a716-446655440000
+                          first_name:
+                            type: string
+                            example: John
+                          middle_name:
+                            type: string
+                            example: Michael
+                          last_name:
+                            type: string
+                            example: Doe
+                          name:
+                            type: string
+                            example: John Michael Doe
+                          email:
+                            type: string
+                            example: john@example.com
+                          phone:
+                            type: string
+                            example: "+12025551234"
+                          avatar:
+                            type: string
+                            example: null
+                          locale:
+                            type: string
+                            example: en
+                          timezone:
+                            type: string
+                            example: null
+                          phone_verified:
+                            type: boolean
+                            example: true
+                          email_verified:
+                            type: boolean
+                            example: false
+                          roles:
+                            type: array
+                            example:
+                              - passenger
+                            items:
+                              type: string
+                          created_at:
+                            type: string
+                            example: 2026-01-24T10:00:00+00:00
+                      message:
+                        type: string
+                        example: Registration completed
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: Validation failed
+                  errors:
+                    first_name:
+                      - The first name field is required.
+                    email:
+                      - The email has already been taken.
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Validation failed
+                  errors:
+                    type: object
+                    properties:
+                      first_name:
+                        type: array
+                        example:
+                          - The first name field is required.
+                        items:
+                          type: string
+                      email:
+                        type: array
+                        example:
+                          - The email has already been taken.
+                        items:
+                          type: string
+      tags:
+        - Passenger
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                  description: First name of the passenger.
+                  example: John
+                middle_name:
+                  type: string
+                  description: Middle name (optional).
+                  example: Michael
+                  nullable: true
+                last_name:
+                  type: string
+                  description: Last name of the passenger.
+                  example: Doe
+                email:
+                  type: string
+                  description: Email address (optional but recommended).
+                  example: john@example.com
+                  nullable: true
+              required:
+                - first_name
+                - last_name
+  /api/v1/passenger/profile:
+    get:
+      summary: Get profile
+      operationId: getProfile
+      description: Retrieve the current passenger's profile information.
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  data:
+                    user:
+                      uuid: 550e8400-e29b-41d4-a716-446655440000
+                      name: John Doe
+                      email: john@example.com
+                      phone: "+12025551234"
+                      avatar: https://example.com/storage/avatars/abc123.jpg
+                      locale: en
+                      timezone: America/New_York
+                      phone_verified: true
+                      email_verified: true
+                      roles:
+                        - passenger
+                      created_at: 2026-01-24T10:00:00+00:00
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        type: object
+                        properties:
+                          uuid:
+                            type: string
+                            example: 550e8400-e29b-41d4-a716-446655440000
+                          name:
+                            type: string
+                            example: John Doe
+                          email:
+                            type: string
+                            example: john@example.com
+                          phone:
+                            type: string
+                            example: "+12025551234"
+                          avatar:
+                            type: string
+                            example: https://example.com/storage/avatars/abc123.jpg
+                          locale:
+                            type: string
+                            example: en
+                          timezone:
+                            type: string
+                            example: America/New_York
+                          phone_verified:
+                            type: boolean
+                            example: true
+                          email_verified:
+                            type: boolean
+                            example: true
+                          roles:
+                            type: array
+                            example:
+                              - passenger
+                            items:
+                              type: string
+                          created_at:
+                            type: string
+                            example: 2026-01-24T10:00:00+00:00
+      tags:
+        - Passenger
+    put:
+      summary: Update profile
+      operationId: updateProfile
+      description: |-
+        Update the passenger's profile information.
+        All fields are optional - only provided fields will be updated.
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  data:
+                    user:
+                      uuid: 550e8400-e29b-41d4-a716-446655440000
+                      first_name: Jane
+                      middle_name: Marie
+                      last_name: Doe
+                      name: Jane Marie Doe
+                      email: jane@example.com
+                      phone: "+12025551234"
+                      avatar: https://example.com/storage/avatars/new123.jpg
+                      locale: en
+                      timezone: America/New_York
+                      phone_verified: true
+                      email_verified: false
+                      roles:
+                        - passenger
+                      created_at: 2026-01-24T10:00:00+00:00
+                    message: Profile updated
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        type: object
+                        properties:
+                          uuid:
+                            type: string
+                            example: 550e8400-e29b-41d4-a716-446655440000
+                          first_name:
+                            type: string
+                            example: Jane
+                          middle_name:
+                            type: string
+                            example: Marie
+                          last_name:
+                            type: string
+                            example: Doe
+                          name:
+                            type: string
+                            example: Jane Marie Doe
+                          email:
+                            type: string
+                            example: jane@example.com
+                          phone:
+                            type: string
+                            example: "+12025551234"
+                          avatar:
+                            type: string
+                            example: https://example.com/storage/avatars/new123.jpg
+                          locale:
+                            type: string
+                            example: en
+                          timezone:
+                            type: string
+                            example: America/New_York
+                          phone_verified:
+                            type: boolean
+                            example: true
+                          email_verified:
+                            type: boolean
+                            example: false
+                          roles:
+                            type: array
+                            example:
+                              - passenger
+                            items:
+                              type: string
+                          created_at:
+                            type: string
+                            example: 2026-01-24T10:00:00+00:00
+                      message:
+                        type: string
+                        example: Profile updated
+        "422":
+          description: Email taken
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: Validation failed
+                  errors:
+                    email:
+                      - The email has already been taken.
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Validation failed
+                  errors:
+                    type: object
+                    properties:
+                      email:
+                        type: array
+                        example:
+                          - The email has already been taken.
+                        items:
+                          type: string
+      tags:
+        - Passenger
+      requestBody:
+        required: false
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                  description: First name.
+                  example: Jane
+                middle_name:
+                  type: string
+                  description: Middle name.
+                  example: Marie
+                  nullable: true
+                last_name:
+                  type: string
+                  description: Last name.
+                  example: Doe
+                email:
+                  type: string
+                  description: Email address. Must be unique.
+                  example: jane@example.com
+                  nullable: true
+                avatar:
+                  type: string
+                  format: binary
+                  description: Profile picture. Max 2MB, image formats only.
+                  nullable: true
+                locale:
+                  type: string
+                  description: Preferred language (en, es, ru).
+                  example: en
+                timezone:
+                  type: string
+                  description: Timezone identifier.
+                  example: America/New_York
+  /api/v1/device/token:
+    post:
+      summary: Register device token
+      operationId: registerDeviceToken
+      description: >-
+        Register or update a device token for push notifications.
+
+        If the token already exists for another user, it will be deactivated for
+        them.
+
+        If the token already exists for the current user, it will be updated.
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - description: Success - new token
+                    type: object
+                    example:
+                      success: true
+                      data:
+                        device_token:
+                          id: 1
+                          platform: ios
+                          device_name: iPhone 15 Pro
+                          is_active: true
+                        message: Device token registered
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        type: object
+                        properties:
+                          device_token:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                                example: 1
+                              platform:
+                                type: string
+                                example: ios
+                              device_name:
+                                type: string
+                                example: iPhone 15 Pro
+                              is_active:
+                                type: boolean
+                                example: true
+                          message:
+                            type: string
+                            example: Device token registered
+                  - description: Success - updated token
+                    type: object
+                    example:
+                      success: true
+                      data:
+                        device_token:
+                          id: 1
+                          platform: android
+                          device_name: Pixel 8
+                          is_active: true
+                        message: Device token registered
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        type: object
+                        properties:
+                          device_token:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                                example: 1
+                              platform:
+                                type: string
+                                example: android
+                              device_name:
+                                type: string
+                                example: Pixel 8
+                              is_active:
+                                type: boolean
+                                example: true
+                          message:
+                            type: string
+                            example: Device token registered
+        "422":
+          description: Invalid platform
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: Validation failed
+                  errors:
+                    platform:
+                      - The selected platform is invalid.
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Validation failed
+                  errors:
+                    type: object
+                    properties:
+                      platform:
+                        type: array
+                        example:
+                          - The selected platform is invalid.
+                        items:
+                          type: string
+      tags:
+        - Device
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: FCM/APNs device token.
+                  example: fcm_token_abc123...
+                platform:
+                  type: string
+                  description: "Device platform: `ios`, `android`, or `web`."
+                  example: ios
+                device_name:
+                  type: string
+                  description: Optional device name for identification.
+                  example: iPhone 15 Pro
+                  nullable: true
+              required:
+                - token
+                - platform
+  /api/v1/device/token/{deviceToken_id}:
+    delete:
+      summary: Remove device token
+      operationId: removeDeviceToken
+      description: >-
+        Remove a device token to stop receiving push notifications on that
+        device.
+
+        Users can only delete their own tokens.
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  data:
+                    message: Device token removed
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Device token removed
+        "403":
+          description: Not owner
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: Unauthorized
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Unauthorized
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: Resource not found
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Resource not found
+      tags:
+        - Device
+    parameters:
+      - in: path
+        name: deviceToken_id
+        description: The ID of the deviceToken.
+        example: 11
+        required: true
+        schema:
+          type: integer
+      - in: path
+        name: deviceToken
+        description: The device token ID.
+        example: 1
+        required: true
+        schema:
+          type: integer
+  /api/v1/common/cities:
+    get:
+      summary: Get list of cities.
+      operationId: getListOfCities
+      description: ""
+      parameters:
+        - in: query
+          name: state_id
+          description: Filter cities by state ID.
+          example: 5
+          required: false
+          schema:
+            type: integer
+            description: Filter cities by state ID.
+            example: 5
+        - in: query
+          name: is_major
+          description: Filter by major cities only.
+          example: true
+          required: false
+          schema:
+            type: boolean
+            description: Filter by major cities only.
+            example: true
+      responses:
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: Unauthenticated
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Unauthenticated
+      tags:
+        - Common
+  /api/v1/common/states:
+    get:
+      summary: Get list of states.
+      operationId: getListOfStates
+      description: ""
+      parameters: []
+      responses:
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: Unauthenticated
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Unauthenticated
+      tags:
+        - Common
+  /api/v1/common/vehicle-classes:
+    get:
+      summary: Get list of vehicle classes.
+      operationId: getListOfVehicleClasses
+      description: ""
+      parameters: []
+      responses:
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: Unauthenticated
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Unauthenticated
+      tags:
+        - Common
+  /api/v1/driver/onboarding:
+    get:
+      summary: Get onboarding status
+      operationId: getOnboardingStatus
+      description: >-
+        Returns current onboarding status and any saved draft/submitted data.
+
+        Use this endpoint to check the user's progress in the onboarding
+        process.
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - description: Not started
+                    type: object
+                    example:
+                      success: true
+                      data:
+                        status: not_started
+                        can_submit: false
+                        profile: null
+                        documents: []
+                        vehicle: null
+                        validation:
+                          profile:
+                            complete: false
+                            missing:
+                              - first_name
+                              - last_name
+                              - email
+                              - date_of_birth
+                          license:
+                            complete: false
+                            missing:
+                              - license_number
+                              - license_expires_at
+                          documents:
+                            complete: false
+                            missing:
+                              - medical_certificate
+                              - insurance
+                          vehicle:
+                            complete: false
+                            required: false
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            example: not_started
+                          can_submit:
+                            type: boolean
+                            example: false
+                          profile:
+                            type: string
+                            example: null
+                          documents:
+                            type: array
+                            example: []
+                          vehicle:
+                            type: string
+                            example: null
+                          validation:
+                            type: object
+                            properties:
+                              profile:
+                                type: object
+                                properties:
+                                  complete:
+                                    type: boolean
+                                    example: false
+                                  missing:
+                                    type: array
+                                    example:
+                                      - first_name
+                                      - last_name
+                                      - email
+                                      - date_of_birth
+                                    items:
+                                      type: string
+                              license:
+                                type: object
+                                properties:
+                                  complete:
+                                    type: boolean
+                                    example: false
+                                  missing:
+                                    type: array
+                                    example:
+                                      - license_number
+                                      - license_expires_at
+                                    items:
+                                      type: string
+                              documents:
+                                type: object
+                                properties:
+                                  complete:
+                                    type: boolean
+                                    example: false
+                                  missing:
+                                    type: array
+                                    example:
+                                      - medical_certificate
+                                      - insurance
+                                    items:
+                                      type: string
+                              vehicle:
+                                type: object
+                                properties:
+                                  complete:
+                                    type: boolean
+                                    example: false
+                                  required:
+                                    type: boolean
+                                    example: false
+                  - description: Draft saved
+                    type: object
+                    example:
+                      success: true
+                      data:
+                        status: draft
+                        can_submit: false
+                        profile:
+                          first_name: John
+                          last_name: Doe
+                        license: null
+                        documents: []
+                        vehicle: null
+                        saved_at: 2026-02-01T10:00:00Z
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            example: draft
+                          can_submit:
+                            type: boolean
+                            example: false
+                          profile:
+                            type: object
+                            properties:
+                              first_name:
+                                type: string
+                                example: John
+                              last_name:
+                                type: string
+                                example: Doe
+                          license:
+                            type: string
+                            example: null
+                          documents:
+                            type: array
+                            example: []
+                          vehicle:
+                            type: string
+                            example: null
+                          saved_at:
+                            type: string
+                            example: 2026-02-01T10:00:00Z
+                  - description: Submitted
+                    type: object
+                    example:
+                      success: true
+                      data:
+                        status: submitted
+                        driver_status: documents_submitted
+                        driver_status_label: Documents Submitted
+                        submitted_at: 2026-02-01T10:00:00Z
+                        can_edit: false
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            example: submitted
+                          driver_status:
+                            type: string
+                            example: documents_submitted
+                          driver_status_label:
+                            type: string
+                            example: Documents Submitted
+                          submitted_at:
+                            type: string
+                            example: 2026-02-01T10:00:00Z
+                          can_edit:
+                            type: boolean
+                            example: false
+                  - description: Approved
+                    type: object
+                    example:
+                      success: true
+                      data:
+                        status: approved
+                        driver_status: approved
+                        approved_at: 2026-02-02T10:00:00Z
+                        can_accept_trips: true
+                        message: Congratulations! You can now start accepting trips.
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            example: approved
+                          driver_status:
+                            type: string
+                            example: approved
+                          approved_at:
+                            type: string
+                            example: 2026-02-02T10:00:00Z
+                          can_accept_trips:
+                            type: boolean
+                            example: true
+                          message:
+                            type: string
+                            example: Congratulations! You can now start accepting trips.
+                  - description: Rejected
+                    type: object
+                    example:
+                      success: true
+                      data:
+                        status: rejected
+                        driver_status: rejected
+                        rejection_reason: License photo is unclear
+                        can_resubmit: true
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            example: rejected
+                          driver_status:
+                            type: string
+                            example: rejected
+                          rejection_reason:
+                            type: string
+                            example: License photo is unclear
+                          can_resubmit:
+                            type: boolean
+                            example: true
+      tags:
+        - Driver Onboarding
+    post:
+      summary: Submit onboarding application
+      operationId: submitOnboardingApplication
+      description: |-
+        Submit complete driver onboarding application with profile, license,
+        documents, and vehicle. All data is submitted as multipart/form-data.
+      parameters: []
+      responses:
+        "201":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  data:
+                    message: Application submitted successfully!
+                    driver:
+                      uuid: 550e8400-e29b-41d4-a716-446655440000
+                      status: documents_submitted
+                      status_label: Documents Submitted
+                    vehicle:
+                      uuid: 660e8400-e29b-41d4-a716-446655440000
+                      status: documents_submitted
+                      display_name: 2022 Toyota Camry (ABC123)
+                    next_steps:
+                      - Your application is being reviewed
+                      - You'll receive a notification when approved
+                      - This usually takes 1-2 business days
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Application submitted successfully!
+                      driver:
+                        type: object
+                        properties:
+                          uuid:
+                            type: string
+                            example: 550e8400-e29b-41d4-a716-446655440000
+                          status:
+                            type: string
+                            example: documents_submitted
+                          status_label:
+                            type: string
+                            example: Documents Submitted
+                      vehicle:
+                        type: object
+                        properties:
+                          uuid:
+                            type: string
+                            example: 660e8400-e29b-41d4-a716-446655440000
+                          status:
+                            type: string
+                            example: documents_submitted
+                          display_name:
+                            type: string
+                            example: 2022 Toyota Camry (ABC123)
+                      next_steps:
+                        type: array
+                        example:
+                          - Your application is being reviewed
+                          - You'll receive a notification when approved
+                          - This usually takes 1-2 business days
+                        items:
+                          type: string
+        "409":
+          description: Already registered
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: You already have a driver profile
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: You already have a driver profile
+        "422":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: Validation failed
+                  errors:
+                    date_of_birth:
+                      - You must be at least 21 years old
+                    documents:
+                      - Medical Certificate is required.
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Validation failed
+                  errors:
+                    type: object
+                    properties:
+                      date_of_birth:
+                        type: array
+                        example:
+                          - You must be at least 21 years old
+                        items:
+                          type: string
+                      documents:
+                        type: array
+                        example:
+                          - Medical Certificate is required.
+                        items:
+                          type: string
+      tags:
+        - Driver Onboarding
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                photo:
+                  type: string
+                  format: binary
+                  description: Must be an image. Must not be greater than 5120 kilobytes.
+                  nullable: true
+                first_name:
+                  type: string
+                  description: First name.
+                  example: John
+                middle_name:
+                  type: string
+                  description: Middle name.
+                  example: M
+                  nullable: true
+                last_name:
+                  type: string
+                  description: Last name.
+                  example: Doe
+                email:
+                  type: string
+                  description: Email address.
+                  example: john@example.com
+                date_of_birth:
+                  type: date
+                  description: Date of birth (must be 21+).
+                  example: 1990-05-15
+                gender:
+                  type: string
+                  description: Gender (M or F).
+                  example: M
+                  nullable: true
+                street_address:
+                  type: string
+                  description: Street address.
+                  example: 123 Main St
+                  nullable: true
+                apt_suite:
+                  type: string
+                  description: Apartment/Suite number.
+                  example: Apt 4B
+                  nullable: true
+                city_id:
+                  type: integer
+                  description: City ID from options endpoint.
+                  example: 11
+                  nullable: true
+                zip_code:
+                  type: string
+                  description: ZIP code.
+                  example: "10001"
+                  nullable: true
+                license_number:
+                  type: string
+                  description: Driver's license number.
+                  example: DL123456789
+                license_issued_at:
+                  type: date
+                  description: License issue date.
+                  example: 2020-01-15
+                  nullable: true
+                license_expires_at:
+                  type: date
+                  description: License expiry (must be future).
+                  example: 2028-01-15
+                license_front_photo:
+                  type: string
+                  format: binary
+                  description: Front photo of license. Max 5MB.
+                license_back_photo:
+                  type: string
+                  format: binary
+                  description: Back photo of license. Max 5MB.
+                documents:
+                  type: array
+                  description: ""
+                  example: null
+                  items:
+                    type: object
+                    nullable: true
+                    properties:
+                      type:
+                        type: string
+                        description: ""
+                        example: medical_certificate
+                        enum:
+                          - medical_certificate
+                          - insurance
+                      file:
+                        type: string
+                        format: binary
+                        description: Must be a file. Must not be greater than 10240 kilobytes.
+                      document_number:
+                        type: string
+                        description: Must not be greater than 100 characters.
+                        example: dszigdqrrkthqpvv
+                        nullable: true
+                      issued_at:
+                        type: string
+                        description: Must be a valid date. Must be a date before or equal to
+                          <code>today</code>.
+                        example: 2009-03-05
+                        nullable: true
+                      expires_at:
+                        type: string
+                        description: Must be a valid date. Must be a date after <code>today</code>.
+                        example: 2069-03-05
+                        nullable: true
+                    required:
+                      - type
+                      - file
+                vehicle:
+                  type: object
+                  description: ""
+                  example: []
+                  properties:
+                    make:
+                      type: string
+                      description: Must not be greater than 100 characters.
+                      example: ipzdszigdqrrkthq
+                    model:
+                      type: string
+                      description: Must not be greater than 100 characters.
+                      example: pvviwahfxqnyifdn
+                    year:
+                      type: integer
+                      description: Must be at least 2000. Must not be greater than 2027.
+                      example: 24
+                    color:
+                      type: string
+                      description: Must not be greater than 50 characters.
+                      example: zclnhfpvmsnpkynl
+                    license_plate:
+                      type: string
+                      description: Must not be greater than 20 characters.
+                      example: nbgjdpzixzk
+                    vin:
+                      type: string
+                      description: Must be 17 characters.
+                      example: hgmlxfmavknkckbhg
+                      nullable: true
+                    seat_count:
+                      type: integer
+                      description: Must be at least 1. Must not be greater than 15.
+                      example: 1
+                    vehicle_class_id:
+                      type: string
+                      description: The <code>id</code> of an existing record in the vehicle_classes
+                        table.
+                      example: ab
+                    vehicle_type_id:
+                      type: string
+                      description: The <code>id</code> of an existing record in the vehicle_types
+                        table.
+                      example: ab
+                    custom_vehicle_type:
+                      type: string
+                      description: Must not be greater than 100 characters.
+                      example: pzdszigdqrrkthqp
+                      nullable: true
+                    feature_ids:
+                      type: array
+                      description: The <code>id</code> of an existing record in the vehicle_features
+                        table.
+                      example:
+                        - 11
+                      items:
+                        type: integer
+                    insurance_expiry:
+                      type: string
+                      description: Must be a valid date. Must be a date after <code>today</code>.
+                      example: 2069-03-05
+                    technical_inspection_expiry:
+                      type: string
+                      description: Must be a valid date. Must be a date after <code>today</code>.
+                      example: 2069-03-05
+                    photos:
+                      type: array
+                      description: Must be an image. Must not be greater than 5120 kilobytes.
+                      items:
+                        type: string
+                        format: binary
+                  required:
+                    - make
+                    - model
+                    - year
+                    - color
+                    - license_plate
+                    - seat_count
+                    - vehicle_class_id
+                    - vehicle_type_id
+                    - insurance_expiry
+                    - technical_inspection_expiry
+                    - photos
+                documents[0][type]:
+                  type: string
+                  description: Document type (medical_certificate or insurance).
+                  example: medical_certificate
+                documents[0][file]:
+                  type: string
+                  format: binary
+                  description: Document file. Max 10MB.
+                documents[0][expires_at]:
+                  type: date
+                  description: Document expiry date.
+                  example: 2027-01-01
+                documents[0][document_number]:
+                  type: string
+                  description: Document number.
+                  example: MC123456
+                documents[1][type]:
+                  type: string
+                  description: Second document type.
+                  example: insurance
+                documents[1][file]:
+                  type: string
+                  format: binary
+                  description: Second document file. Max 10MB.
+                documents[1][expires_at]:
+                  type: date
+                  description: Second document expiry.
+                  example: 2027-06-01
+                vehicle[make]:
+                  type: string
+                  description: Vehicle make.
+                  example: Toyota
+                vehicle[model]:
+                  type: string
+                  description: Vehicle model.
+                  example: Camry
+                vehicle[year]:
+                  type: integer
+                  description: Vehicle year.
+                  example: 2022
+                vehicle[color]:
+                  type: string
+                  description: Vehicle color.
+                  example: Silver
+                vehicle[license_plate]:
+                  type: string
+                  description: Vehicle license plate.
+                  example: ABC123
+                vehicle[vin]:
+                  type: string
+                  description: VIN (17 characters).
+                  example: 1HGBH41JXMN109186
+                vehicle[seat_count]:
+                  type: integer
+                  description: Passenger seats.
+                  example: 4
+                vehicle[vehicle_class_id]:
+                  type: integer
+                  description: Vehicle class ID.
+                  example: 1
+                vehicle[vehicle_type_id]:
+                  type: integer
+                  description: Vehicle type ID.
+                  example: 1
+                vehicle[insurance_expiry]:
+                  type: date
+                  description: Insurance expiry.
+                  example: 2026-12-01
+                vehicle[technical_inspection_expiry]:
+                  type: date
+                  description: Inspection expiry.
+                  example: 2026-06-01
+                vehicle[photos][0]:
+                  type: string
+                  format: binary
+                  description: First vehicle photo (front). Max 5MB.
+                vehicle[photos][1]:
+                  type: string
+                  format: binary
+                  description: Second vehicle photo (back). Max 5MB.
+                vehicle[photos][2]:
+                  type: string
+                  format: binary
+                  description: Third vehicle photo (left). Max 5MB.
+                vehicle[photos][3]:
+                  type: string
+                  format: binary
+                  description: Fourth vehicle photo (right). Max 5MB.
+              required:
+                - first_name
+                - last_name
+                - email
+                - date_of_birth
+                - license_number
+                - license_expires_at
+                - license_front_photo
+                - license_back_photo
+                - vehicle
+                - documents[0][type]
+                - documents[0][file]
+                - documents[1][type]
+                - documents[1][file]
+                - vehicle[make]
+                - vehicle[model]
+                - vehicle[year]
+                - vehicle[color]
+                - vehicle[license_plate]
+                - vehicle[seat_count]
+                - vehicle[vehicle_class_id]
+                - vehicle[insurance_expiry]
+                - vehicle[technical_inspection_expiry]
+                - vehicle[photos][0]
+                - vehicle[photos][1]
+                - vehicle[photos][2]
+                - vehicle[photos][3]
+    put:
+      summary: Save draft
+      operationId: saveDraft
+      description: >-
+        Save partial onboarding data to continue later. Data is stored for 7
+        days.
+
+        Note: File uploads are not supported in draft mode - files must be
+        uploaded
+
+        during final submission.
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  data:
+                    message: Draft saved
+                    saved_at: 2026-02-01T10:00:00Z
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Draft saved
+                      saved_at:
+                        type: string
+                        example: 2026-02-01T10:00:00Z
+        "409":
+          description: Already registered
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: You already have a driver profile
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: You already have a driver profile
+      tags:
+        - Driver Onboarding
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                profile:
+                  type: object
+                  description: Partial profile data.
+                  example: []
+                  properties:
+                    first_name:
+                      type: string
+                      description: First name.
+                      example: John
+                      nullable: true
+                    middle_name:
+                      type: string
+                      description: Must not be greater than 100 characters.
+                      example: pvviwahfxqnyifdn
+                      nullable: true
+                    last_name:
+                      type: string
+                      description: Last name.
+                      example: Doe
+                      nullable: true
+                    email:
+                      type: string
+                      description: Email.
+                      example: john@example.com
+                      nullable: true
+                    date_of_birth:
+                      type: date
+                      description: Date of birth.
+                      example: 1990-05-15
+                      nullable: true
+                    gender:
+                      type: string
+                      description: ""
+                      example: F
+                      enum:
+                        - M
+                        - F
+                      nullable: true
+                    street_address:
+                      type: string
+                      description: Must not be greater than 500 characters.
+                      example: pzdszigdqrrkthqp
+                      nullable: true
+                    apt_suite:
+                      type: string
+                      description: Must not be greater than 50 characters.
+                      example: vviwahfxqnyifdnn
+                      nullable: true
+                    city_id:
+                      type: string
+                      description: The <code>id</code> of an existing record in the cities table.
+                      example: null
+                      nullable: true
+                    zip_code:
+                      type: string
+                      description: Must match the regex /^\d{5}(-\d{4})?$/.
+                      example: 08101-5657
+                      nullable: true
+                  nullable: true
+                license:
+                  type: object
+                  description: Partial license data.
+                  example: []
+                  properties:
+                    license_number:
+                      type: string
+                      description: License number.
+                      example: DL123456
+                      nullable: true
+                    license_issued_at:
+                      type: string
+                      description: Must be a valid date. Must be a date before <code>today</code>.
+                      example: 2009-03-05
+                      nullable: true
+                    license_expires_at:
+                      type: date
+                      description: Expiry date.
+                      example: 2028-01-15
+                      nullable: true
+                  nullable: true
+                documents:
+                  type: array
+                  description: Document metadata (without files).
+                  example:
+                    - ab
+                  items:
+                    type: string
+                    nullable: true
+                vehicle:
+                  type: object
+                  description: Partial vehicle data.
+                  example: []
+                  properties:
+                    make:
+                      type: string
+                      description: Must not be greater than 100 characters.
+                      example: dszigdqrrkthqpvv
+                      nullable: true
+                    model:
+                      type: string
+                      description: Must not be greater than 100 characters.
+                      example: iwahfxqnyifdnnzc
+                      nullable: true
+                    year:
+                      type: integer
+                      description: Must be at least 2000. Must not be greater than 2027.
+                      example: 16
+                      nullable: true
+                    color:
+                      type: string
+                      description: Must not be greater than 50 characters.
+                      example: nhfpvmsnpkynlnbg
+                      nullable: true
+                    license_plate:
+                      type: string
+                      description: Must not be greater than 20 characters.
+                      example: jdpzixzkhgm
+                      nullable: true
+                    vin:
+                      type: string
+                      description: Must be 17 characters.
+                      example: lxfmavknkckbhgmqy
+                      nullable: true
+                    seat_count:
+                      type: integer
+                      description: Must be at least 1. Must not be greater than 15.
+                      example: 8
+                      nullable: true
+                    vehicle_class_id:
+                      type: string
+                      description: The <code>id</code> of an existing record in the vehicle_classes
+                        table.
+                      example: null
+                      nullable: true
+                    vehicle_type_id:
+                      type: string
+                      description: The <code>id</code> of an existing record in the vehicle_types
+                        table.
+                      example: null
+                      nullable: true
+                    custom_vehicle_type:
+                      type: string
+                      description: Must not be greater than 100 characters.
+                      example: ipywyxscplvrjzaq
+                      nullable: true
+                    feature_ids:
+                      type: array
+                      description: The <code>id</code> of an existing record in the vehicle_features
+                        table.
+                      example:
+                        - 11
+                      items:
+                        type: integer
+                    insurance_expiry:
+                      type: string
+                      description: Must be a valid date. Must be a date after <code>today</code>.
+                      example: 2069-03-05
+                      nullable: true
+                    technical_inspection_expiry:
+                      type: string
+                      description: Must be a valid date. Must be a date after <code>today</code>.
+                      example: 2069-03-05
+                      nullable: true
+                  nullable: true
+    patch:
+      summary: Update rejected application
+      operationId: updateRejectedApplication
+      description: |-
+        Update specific fields of a rejected onboarding application.
+        Only available when driver status is "rejected".
+        Submit only the fields that need to be corrected.
+        After update, application is automatically resubmitted for review.
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  data:
+                    message: Application updated and resubmitted for review
+                    updated_sections:
+                      - license
+                      - documents
+                    driver:
+                      uuid: 550e8400-e29b-41d4-a716-446655440000
+                      status: documents_submitted
+                      status_label: Documents Submitted
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Application updated and resubmitted for review
+                      updated_sections:
+                        type: array
+                        example:
+                          - license
+                          - documents
+                        items:
+                          type: string
+                      driver:
+                        type: object
+                        properties:
+                          uuid:
+                            type: string
+                            example: 550e8400-e29b-41d4-a716-446655440000
+                          status:
+                            type: string
+                            example: documents_submitted
+                          status_label:
+                            type: string
+                            example: Documents Submitted
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - description: Not rejected
+                    type: object
+                    example:
+                      success: false
+                      message: You can only update your application when it has been rejected.
+                    properties:
+                      success:
+                        type: boolean
+                        example: false
+                      message:
+                        type: string
+                        example: You can only update your application when it has been rejected.
+                  - description: No driver profile
+                    type: object
+                    example:
+                      success: false
+                      message: You must complete onboarding first.
+                    properties:
+                      success:
+                        type: boolean
+                        example: false
+                      message:
+                        type: string
+                        example: You must complete onboarding first.
+      tags:
+        - Driver Onboarding
+      requestBody:
+        required: false
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                photo:
+                  type: string
+                  format: binary
+                  description: Must be an image. Must not be greater than 5120 kilobytes.
+                first_name:
+                  type: string
+                  description: First name.
+                  example: John
+                middle_name:
+                  type: string
+                  description: Must not be greater than 100 characters.
+                  example: pvviwahfxqnyifdn
+                  nullable: true
+                last_name:
+                  type: string
+                  description: Last name.
+                  example: Doe
+                email:
+                  type: string
+                  description: Email address.
+                  example: john@example.com
+                date_of_birth:
+                  type: date
+                  description: Date of birth.
+                  example: 1990-05-15
+                gender:
+                  type: string
+                  description: ""
+                  example: F
+                  enum:
+                    - M
+                    - F
+                  nullable: true
+                street_address:
+                  type: string
+                  description: Must not be greater than 500 characters.
+                  example: pzdszigdqrrkthqp
+                  nullable: true
+                apt_suite:
+                  type: string
+                  description: Must not be greater than 50 characters.
+                  example: vviwahfxqnyifdnn
+                  nullable: true
+                city_id:
+                  type: string
+                  description: The <code>id</code> of an existing record in the cities table.
+                  example: null
+                  nullable: true
+                zip_code:
+                  type: string
+                  description: Must match the regex /^\d{5}(-\d{4})?$/.
+                  example: 08101-5657
+                  nullable: true
+                license_number:
+                  type: string
+                  description: License number.
+                  example: DL123456789
+                license_issued_at:
+                  type: string
+                  description: Must be a valid date. Must be a date before <code>today</code>.
+                  example: 2009-03-05
+                  nullable: true
+                license_expires_at:
+                  type: date
+                  description: License expiry.
+                  example: 2028-01-15
+                license_front_photo:
+                  type: string
+                  format: binary
+                  description: Front photo of license. Max 5MB.
+                license_back_photo:
+                  type: string
+                  format: binary
+                  description: Back photo of license. Max 5MB.
+                documents:
+                  type: array
+                  description: ""
+                  example: null
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        description: This field is required when <code>documents</code> is present.
+                        example: medical_certificate
+                        enum:
+                          - medical_certificate
+                          - insurance
+                      file:
+                        type: string
+                        format: binary
+                        description: Must be a file. Must not be greater than 10240 kilobytes.
+                        nullable: true
+                      document_number:
+                        type: string
+                        description: Must not be greater than 100 characters.
+                        example: dszigdqrrkthqpvv
+                        nullable: true
+                      issued_at:
+                        type: string
+                        description: Must be a valid date. Must be a date before or equal to
+                          <code>today</code>.
+                        example: 2009-03-05
+                        nullable: true
+                      expires_at:
+                        type: string
+                        description: Must be a valid date. Must be a date after <code>today</code>.
+                        example: 2069-03-05
+                        nullable: true
+                vehicle:
+                  type: object
+                  description: ""
+                  example: null
+                  properties:
+                    make:
+                      type: string
+                      description: Must not be greater than 100 characters.
+                      example: dszigdqrrkthqpvv
+                    model:
+                      type: string
+                      description: Must not be greater than 100 characters.
+                      example: iwahfxqnyifdnnzc
+                    year:
+                      type: integer
+                      description: Must be at least 2000. Must not be greater than 2027.
+                      example: 16
+                    color:
+                      type: string
+                      description: Must not be greater than 50 characters.
+                      example: nhfpvmsnpkynlnbg
+                    license_plate:
+                      type: string
+                      description: Must not be greater than 20 characters.
+                      example: jdpzixzkhgm
+                    vin:
+                      type: string
+                      description: Must be 17 characters.
+                      example: lxfmavknkckbhgmqy
+                      nullable: true
+                    seat_count:
+                      type: integer
+                      description: Must be at least 1. Must not be greater than 15.
+                      example: 8
+                    vehicle_class_id:
+                      type: string
+                      description: The <code>id</code> of an existing record in the vehicle_classes
+                        table.
+                      example: null
+                    vehicle_type_id:
+                      type: string
+                      description: The <code>id</code> of an existing record in the vehicle_types
+                        table.
+                      example: null
+                    custom_vehicle_type:
+                      type: string
+                      description: Must not be greater than 100 characters.
+                      example: ipywyxscplvrjzaq
+                      nullable: true
+                    feature_ids:
+                      type: array
+                      description: The <code>id</code> of an existing record in the vehicle_features
+                        table.
+                      example:
+                        - 11
+                      items:
+                        type: integer
+                    insurance_expiry:
+                      type: string
+                      description: Must be a valid date. Must be a date after <code>today</code>.
+                      example: 2069-03-05
+                    technical_inspection_expiry:
+                      type: string
+                      description: Must be a valid date. Must be a date after <code>today</code>.
+                      example: 2069-03-05
+                    photos:
+                      type: array
+                      description: This field is required when <code>vehicle.photos</code> is present.
+                        Must be an image. Must not be greater than 5120
+                        kilobytes.
+                      items:
+                        type: string
+                        format: binary
+                documents[0][type]:
+                  type: string
+                  description: Document type to update.
+                  example: medical_certificate
+                documents[0][file]:
+                  type: string
+                  format: binary
+                  description: New document file. Max 10MB.
+                documents[0][expires_at]:
+                  type: date
+                  description: Document expiry.
+                  example: 2027-01-01
+                vehicle[make]:
+                  type: string
+                  description: Vehicle make.
+                  example: Toyota
+                vehicle[model]:
+                  type: string
+                  description: Vehicle model.
+                  example: Camry
+                vehicle[photos][0]:
+                  type: string
+                  format: binary
+                  description: Vehicle photo. Max 5MB.
+                vehicle[photos][1]:
+                  type: string
+                  format: binary
+                  description: Vehicle photo. Max 5MB.
+                vehicle[photos][2]:
+                  type: string
+                  format: binary
+                  description: Vehicle photo. Max 5MB.
+                vehicle[photos][3]:
+                  type: string
+                  format: binary
+                  description: Vehicle photo. Max 5MB.
+  /api/v1/driver/onboarding/options:
+    get:
+      summary: Get onboarding options
+      operationId: getOnboardingOptions
+      description: Get reference data for dropdowns in the onboarding form.
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  data:
+                    cities:
+                      - id: 1
+                        name: New York
+                        state: NY
+                    vehicle_classes:
+                      - id: 1
+                        name: economy
+                        display_name: Economy
+                        description: ...
+                        price_multiplier: 1
+                    vehicle_types:
+                      - id: 1
+                        name: sedan
+                        display_name: Sedan
+                    document_types:
+                      - type: medical_certificate
+                        label: Medical Certificate
+                        required: true
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      cities:
+                        type: array
+                        example:
+                          - id: 1
+                            name: New York
+                            state: NY
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            name:
+                              type: string
+                              example: New York
+                            state:
+                              type: string
+                              example: NY
+                      vehicle_classes:
+                        type: array
+                        example:
+                          - id: 1
+                            name: economy
+                            display_name: Economy
+                            description: ...
+                            price_multiplier: 1
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            name:
+                              type: string
+                              example: economy
+                            display_name:
+                              type: string
+                              example: Economy
+                            description:
+                              type: string
+                              example: ...
+                            price_multiplier:
+                              type: number
+                              example: 1
+                      vehicle_types:
+                        type: array
+                        example:
+                          - id: 1
+                            name: sedan
+                            display_name: Sedan
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            name:
+                              type: string
+                              example: sedan
+                            display_name:
+                              type: string
+                              example: Sedan
+                      document_types:
+                        type: array
+                        example:
+                          - type: medical_certificate
+                            label: Medical Certificate
+                            required: true
+                        items:
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                              example: medical_certificate
+                            label:
+                              type: string
+                              example: Medical Certificate
+                            required:
+                              type: boolean
+                              example: true
+      tags:
+        - Driver Onboarding
+  /api/v1/driver/profile:
+    get:
+      summary: Get profile
+      operationId: getProfile
+      description: >-
+        Retrieve the current driver's full profile including vehicles,
+        documents, and active document requests.
+
+        Only available for approved or suspended drivers.
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  data:
+                    profile:
+                      user:
+                        uuid: 550e8400-e29b-41d4-a716-446655440000
+                        first_name: John
+                        middle_name: Michael
+                        last_name: Doe
+                        name: John Michael Doe
+                        email: john@example.com
+                        phone: "+12025551234"
+                        avatar: https://example.com/storage/avatars/abc123.jpg
+                        locale: en
+                        timezone: America/New_York
+                        phone_verified: true
+                        email_verified: false
+                        roles:
+                          - driver
+                        created_at: 2026-01-15T10:00:00+00:00
+                      uuid: 660e8400-e29b-41d4-a716-446655440001
+                      status: approved
+                      status_label: Approved
+                      status_color: success
+                      date_of_birth: 1995-05-15
+                      age: 30
+                      gender: M
+                      gender_label: Male
+                      street_address: 123 Main St
+                      apt_suite: Apt 4B
+                      city:
+                        id: 1
+                        name: New York
+                        state_code: NY
+                      zip_code: "10001"
+                      full_address: 123 Main St, Apt 4B, New York, NY, 10001
+                      license_number: DL123456789
+                      license_expires_at: 2028-12-31
+                      license_front_photo: https://example.com/storage/drivers/licenses/front.jpg
+                      license_back_photo: https://example.com/storage/drivers/licenses/back.jpg
+                      is_license_expired: false
+                      rating: 4.85
+                      total_trips: 150
+                      completed_trips: 142
+                      is_available: true
+                      is_active: true
+                      fleet:
+                        uuid: 770e8400-e29b-41d4-a716-446655440002
+                        name: City Express Fleet
+                      vehicles:
+                        - uuid: 880e8400-e29b-41d4-a716-446655440003
+                          status: approved
+                          status_label: Approved
+                          make: Toyota
+                          model: Camry
+                          year: 2023
+                          color: Black
+                          license_plate: ABC1234
+                          seat_count: 4
+                          full_name: 2023 Toyota Camry
+                          photos:
+                            - https://example.com/storage/vehicles/photo1.jpg
+                          is_primary: true
+                          is_active: true
+                          assigned_at: 2026-01-20 10:00:00
+                          vehicle_class:
+                            id: 1
+                            name: economy
+                            display_name: Economy
+                          vehicle_type:
+                            id: 1
+                            name: sedan
+                            display_name: Sedan
+                          features:
+                            - id: 1
+                              name: wifi
+                              display_name: Wi-Fi
+                      documents:
+                        - id: 1
+                          type: medical_certificate
+                          type_label: Medical Certificate
+                          status: approved
+                          status_label: Approved
+                          status_color: success
+                          file_url: https://example.com/storage/driver-documents/medical.pdf
+                          document_number: null
+                          issued_at: 2026-01-10
+                          expires_at: 2027-01-10
+                          is_expired: false
+                          is_expiring_soon: false
+                          rejection_reason: null
+                          verified_at: 2026-01-12T10:00:00+00:00
+                          uploaded_at: 2026-01-10T10:00:00+00:00
+                      document_request: null
+                      verified_at: 2026-01-20T10:00:00+00:00
+                      rejection_reason: null
+                      created_at: 2026-01-15T10:00:00+00:00
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      profile:
+                        type: object
+                        properties:
+                          user:
+                            type: object
+                            properties:
+                              uuid:
+                                type: string
+                                example: 550e8400-e29b-41d4-a716-446655440000
+                              first_name:
+                                type: string
+                                example: John
+                              middle_name:
+                                type: string
+                                example: Michael
+                              last_name:
+                                type: string
+                                example: Doe
+                              name:
+                                type: string
+                                example: John Michael Doe
+                              email:
+                                type: string
+                                example: john@example.com
+                              phone:
+                                type: string
+                                example: "+12025551234"
+                              avatar:
+                                type: string
+                                example: https://example.com/storage/avatars/abc123.jpg
+                              locale:
+                                type: string
+                                example: en
+                              timezone:
+                                type: string
+                                example: America/New_York
+                              phone_verified:
+                                type: boolean
+                                example: true
+                              email_verified:
+                                type: boolean
+                                example: false
+                              roles:
+                                type: array
+                                example:
+                                  - driver
+                                items:
+                                  type: string
+                              created_at:
+                                type: string
+                                example: 2026-01-15T10:00:00+00:00
+                          uuid:
+                            type: string
+                            example: 660e8400-e29b-41d4-a716-446655440001
+                          status:
+                            type: string
+                            example: approved
+                          status_label:
+                            type: string
+                            example: Approved
+                          status_color:
+                            type: string
+                            example: success
+                          date_of_birth:
+                            type: string
+                            example: 1995-05-15
+                          age:
+                            type: integer
+                            example: 30
+                          gender:
+                            type: string
+                            example: M
+                          gender_label:
+                            type: string
+                            example: Male
+                          street_address:
+                            type: string
+                            example: 123 Main St
+                          apt_suite:
+                            type: string
+                            example: Apt 4B
+                          city:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                                example: 1
+                              name:
+                                type: string
+                                example: New York
+                              state_code:
+                                type: string
+                                example: NY
+                          zip_code:
+                            type: string
+                            example: "10001"
+                          full_address:
+                            type: string
+                            example: 123 Main St, Apt 4B, New York, NY, 10001
+                          license_number:
+                            type: string
+                            example: DL123456789
+                          license_expires_at:
+                            type: string
+                            example: 2028-12-31
+                          license_front_photo:
+                            type: string
+                            example: https://example.com/storage/drivers/licenses/front.jpg
+                          license_back_photo:
+                            type: string
+                            example: https://example.com/storage/drivers/licenses/back.jpg
+                          is_license_expired:
+                            type: boolean
+                            example: false
+                          rating:
+                            type: number
+                            example: 4.85
+                          total_trips:
+                            type: integer
+                            example: 150
+                          completed_trips:
+                            type: integer
+                            example: 142
+                          is_available:
+                            type: boolean
+                            example: true
+                          is_active:
+                            type: boolean
+                            example: true
+                          fleet:
+                            type: object
+                            properties:
+                              uuid:
+                                type: string
+                                example: 770e8400-e29b-41d4-a716-446655440002
+                              name:
+                                type: string
+                                example: City Express Fleet
+                          vehicles:
+                            type: array
+                            example:
+                              - uuid: 880e8400-e29b-41d4-a716-446655440003
+                                status: approved
+                                status_label: Approved
+                                make: Toyota
+                                model: Camry
+                                year: 2023
+                                color: Black
+                                license_plate: ABC1234
+                                seat_count: 4
+                                full_name: 2023 Toyota Camry
+                                photos:
+                                  - https://example.com/storage/vehicles/photo1.jpg
+                                is_primary: true
+                                is_active: true
+                                assigned_at: 2026-01-20 10:00:00
+                                vehicle_class:
+                                  id: 1
+                                  name: economy
+                                  display_name: Economy
+                                vehicle_type:
+                                  id: 1
+                                  name: sedan
+                                  display_name: Sedan
+                                features:
+                                  - id: 1
+                                    name: wifi
+                                    display_name: Wi-Fi
+                            items:
+                              type: object
+                              properties:
+                                uuid:
+                                  type: string
+                                  example: 880e8400-e29b-41d4-a716-446655440003
+                                status:
+                                  type: string
+                                  example: approved
+                                status_label:
+                                  type: string
+                                  example: Approved
+                                make:
+                                  type: string
+                                  example: Toyota
+                                model:
+                                  type: string
+                                  example: Camry
+                                year:
+                                  type: integer
+                                  example: 2023
+                                color:
+                                  type: string
+                                  example: Black
+                                license_plate:
+                                  type: string
+                                  example: ABC1234
+                                seat_count:
+                                  type: integer
+                                  example: 4
+                                full_name:
+                                  type: string
+                                  example: 2023 Toyota Camry
+                                photos:
+                                  type: array
+                                  example:
+                                    - https://example.com/storage/vehicles/photo1.jpg
+                                  items:
+                                    type: string
+                                is_primary:
+                                  type: boolean
+                                  example: true
+                                is_active:
+                                  type: boolean
+                                  example: true
+                                assigned_at:
+                                  type: string
+                                  example: 2026-01-20 10:00:00
+                                vehicle_class:
+                                  type: object
+                                  properties:
+                                    id:
+                                      type: integer
+                                      example: 1
+                                    name:
+                                      type: string
+                                      example: economy
+                                    display_name:
+                                      type: string
+                                      example: Economy
+                                vehicle_type:
+                                  type: object
+                                  properties:
+                                    id:
+                                      type: integer
+                                      example: 1
+                                    name:
+                                      type: string
+                                      example: sedan
+                                    display_name:
+                                      type: string
+                                      example: Sedan
+                                features:
+                                  type: array
+                                  example:
+                                    - id: 1
+                                      name: wifi
+                                      display_name: Wi-Fi
+                                  items:
+                                    type: object
+                                    properties:
+                                      id:
+                                        type: integer
+                                        example: 1
+                                      name:
+                                        type: string
+                                        example: wifi
+                                      display_name:
+                                        type: string
+                                        example: Wi-Fi
+                          documents:
+                            type: array
+                            example:
+                              - id: 1
+                                type: medical_certificate
+                                type_label: Medical Certificate
+                                status: approved
+                                status_label: Approved
+                                status_color: success
+                                file_url: https://example.com/storage/driver-documents/medical.pdf
+                                document_number: null
+                                issued_at: 2026-01-10
+                                expires_at: 2027-01-10
+                                is_expired: false
+                                is_expiring_soon: false
+                                rejection_reason: null
+                                verified_at: 2026-01-12T10:00:00+00:00
+                                uploaded_at: 2026-01-10T10:00:00+00:00
+                            items:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+                                  example: 1
+                                type:
+                                  type: string
+                                  example: medical_certificate
+                                type_label:
+                                  type: string
+                                  example: Medical Certificate
+                                status:
+                                  type: string
+                                  example: approved
+                                status_label:
+                                  type: string
+                                  example: Approved
+                                status_color:
+                                  type: string
+                                  example: success
+                                file_url:
+                                  type: string
+                                  example: https://example.com/storage/driver-documents/medical.pdf
+                                document_number:
+                                  type: string
+                                  example: null
+                                issued_at:
+                                  type: string
+                                  example: 2026-01-10
+                                expires_at:
+                                  type: string
+                                  example: 2027-01-10
+                                is_expired:
+                                  type: boolean
+                                  example: false
+                                is_expiring_soon:
+                                  type: boolean
+                                  example: false
+                                rejection_reason:
+                                  type: string
+                                  example: null
+                                verified_at:
+                                  type: string
+                                  example: 2026-01-12T10:00:00+00:00
+                                uploaded_at:
+                                  type: string
+                                  example: 2026-01-10T10:00:00+00:00
+                          document_request:
+                            type: string
+                            example: null
+                          verified_at:
+                            type: string
+                            example: 2026-01-20T10:00:00+00:00
+                          rejection_reason:
+                            type: string
+                            example: null
+                          created_at:
+                            type: string
+                            example: 2026-01-15T10:00:00+00:00
+        "403":
+          description: Not approved/suspended
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: Profile is only available for approved or suspended drivers.
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Profile is only available for approved or suspended drivers.
+        "404":
+          description: No driver
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: Driver profile not found.
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Driver profile not found.
+      tags:
+        - Driver Profile
+    put:
+      summary: Update profile
+      operationId: updateProfile
+      description: >-
+        Update the driver's profile information. All fields are optional.
+
+        Editable fields (address, gender, etc.) can always be updated.
+
+        Verifiable fields (license info) trigger re-review for approved drivers
+        and are prohibited for suspended drivers.
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - description: Success (no re-review)
+                    type: object
+                    example:
+                      success: true
+                      data:
+                        profile:
+                          uuid: 660e8400-e29b-41d4-a716-446655440001
+                          status: approved
+                          ...: full profile object (see GET profile)
+                        review_triggered: false
+                        message: Profile updated
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        type: object
+                        properties:
+                          profile:
+                            type: object
+                            properties:
+                              uuid:
+                                type: string
+                                example: 660e8400-e29b-41d4-a716-446655440001
+                              status:
+                                type: string
+                                example: approved
+                              ...:
+                                type: string
+                                example: full profile object (see GET profile)
+                          review_triggered:
+                            type: boolean
+                            example: false
+                          message:
+                            type: string
+                            example: Profile updated
+                  - description: Success (re-review triggered)
+                    type: object
+                    example:
+                      success: true
+                      data:
+                        profile:
+                          uuid: 660e8400-e29b-41d4-a716-446655440001
+                          status: documents_submitted
+                          ...: full profile object (see GET profile)
+                        review_triggered: true
+                        message: Profile updated
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        type: object
+                        properties:
+                          profile:
+                            type: object
+                            properties:
+                              uuid:
+                                type: string
+                                example: 660e8400-e29b-41d4-a716-446655440001
+                              status:
+                                type: string
+                                example: documents_submitted
+                              ...:
+                                type: string
+                                example: full profile object (see GET profile)
+                          review_triggered:
+                            type: boolean
+                            example: true
+                          message:
+                            type: string
+                            example: Profile updated
+        "403":
+          description: Not approved/suspended
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: Profile updates are only available for approved or suspended drivers.
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Profile updates are only available for approved or suspended drivers.
+        "422":
+          description: Suspended + verifiable field
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: Validation failed
+                  errors:
+                    license_number:
+                      - Cannot update license information while suspended.
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Validation failed
+                  errors:
+                    type: object
+                    properties:
+                      license_number:
+                        type: array
+                        example:
+                          - Cannot update license information while suspended.
+                        items:
+                          type: string
+      tags:
+        - Driver Profile
+      requestBody:
+        required: false
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                  description: First name.
+                  example: John
+                middle_name:
+                  type: string
+                  description: Middle name (optional).
+                  example: Michael
+                  nullable: true
+                last_name:
+                  type: string
+                  description: Last name.
+                  example: Doe
+                email:
+                  type: string
+                  description: Email address (must be unique).
+                  example: john@example.com
+                  nullable: true
+                avatar:
+                  type: string
+                  format: binary
+                  description: Profile picture. Max 2MB, image formats only.
+                  nullable: true
+                locale:
+                  type: string
+                  description: Preferred language (en, es, ru).
+                  example: en
+                timezone:
+                  type: string
+                  description: Timezone identifier.
+                  example: America/New_York
+                date_of_birth:
+                  type: string
+                  description: Date of birth (must be 21+).
+                  example: 1990-05-15
+                gender:
+                  type: string
+                  description: Gender (M or F).
+                  example: M
+                  nullable: true
+                street_address:
+                  type: string
+                  description: Street address.
+                  example: 123 Main St
+                  nullable: true
+                apt_suite:
+                  type: string
+                  description: Apartment/Suite.
+                  example: Apt 4B
+                  nullable: true
+                city_id:
+                  type: integer
+                  description: City ID.
+                  example: 1
+                  nullable: true
+                zip_code:
+                  type: string
+                  description: "ZIP code (format: 12345 or 12345-6789)."
+                  example: "10001"
+                  nullable: true
+                license_number:
+                  type: string
+                  description: License number (triggers re-review, prohibited for suspended).
+                  example: DL123456
+                license_expires_at:
+                  type: string
+                  description: License expiry date (triggers re-review, prohibited for suspended).
+                  example: 2028-12-31
+                license_front_photo:
+                  type: string
+                  format: binary
+                  description: License front photo (triggers re-review, prohibited for suspended).
+                    Max 5MB.
+                license_back_photo:
+                  type: string
+                  format: binary
+                  description: License back photo (triggers re-review, prohibited for suspended).
+                    Max 5MB.
+  /api/v1/driver/documents:
+    post:
+      summary: Upload or replace a driver document.
+      operationId: uploadOrReplaceADriverDocument
+      description: ""
+      parameters: []
+      responses:
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: Unauthenticated
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Unauthenticated
+      tags:
+        - Other
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  description: ""
+                  example: insurance
+                  enum:
+                    - medical_certificate
+                    - insurance
+                file:
+                  type: string
+                  format: binary
+                  description: Must be a file. Must not be greater than 10240 kilobytes.
+                document_number:
+                  type: string
+                  description: Must not be greater than 100 characters.
+                  example: ipzdszigdqrrkthq
+                  nullable: true
+                issued_at:
+                  type: string
+                  description: Must be a valid date. Must be a date before or equal to
+                    <code>today</code>.
+                  example: 2009-03-05
+                  nullable: true
+                expires_at:
+                  type: string
+                  description: Must be a valid date. Must be a date after <code>today</code>.
+                  example: 2069-03-05
+                  nullable: true
+              required:
+                - type
+                - file
