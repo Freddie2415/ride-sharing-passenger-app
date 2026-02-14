@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1079675550781",
+    "project_id": "ride-sharing-402aa",
+    "storage_bucket": "ride-sharing-402aa.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1079675550781:android:fbde5c871f046c31673e54",
+        "android_client_info": {
+          "package_name": "com.ridesharing.driver.driver"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDT-uiZh1n59s_wBAq3ln6nXyO0XtWUNu4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1079675550781:android:f0d16855f4d6c5a8673e54",
+        "android_client_info": {
+          "package_name": "com.ridesharing.passenger.passenger"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDT-uiZh1n59s_wBAq3ln6nXyO0XtWUNu4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
