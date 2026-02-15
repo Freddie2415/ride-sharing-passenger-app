@@ -18,9 +18,18 @@ import 'package:passenger/core/network/connectivity_service.dart' as _i165;
 import 'package:passenger/core/network/token_storage.dart' as _i297;
 import 'package:passenger/core/services/auth_service.dart' as _i272;
 import 'package:passenger/core/services/auth_service_impl.dart' as _i931;
+import 'package:passenger/core/services/device_token_service.dart' as _i128;
+import 'package:passenger/core/services/device_token_service_impl.dart'
+    as _i831;
 import 'package:passenger/core/services/passenger_service.dart' as _i197;
 import 'package:passenger/core/services/passenger_service_impl.dart' as _i903;
+import 'package:passenger/core/services/push_notification_service.dart'
+    as _i579;
+import 'package:passenger/core/services/push_notification_service_impl.dart'
+    as _i751;
 import 'package:passenger/features/auth/cubit/auth_cubit.dart' as _i318;
+import 'package:passenger/features/notifications/cubit/push_notification_cubit.dart'
+    as _i711;
 import 'package:passenger/features/profile/cubit/profile_cubit.dart' as _i33;
 import 'package:passenger/features/registration/cubit/registration_cubit.dart'
     as _i484;
@@ -58,12 +67,26 @@ extension GetItInjectableX on _i174.GetIt {
         connectivity: gh<_i165.ConnectivityService>(),
       ),
     );
+    gh.lazySingleton<_i579.PushNotificationService>(
+      () => _i751.PushNotificationServiceImpl(),
+      dispose: _i751.disposePushNotificationService,
+    );
     gh.lazySingleton<_i272.AuthService>(
       () => _i931.AuthServiceImpl(gh<_i361.Dio>(), gh<_i297.TokenStorage>()),
+    );
+    gh.lazySingleton<_i128.DeviceTokenService>(
+      () => _i831.DeviceTokenServiceImpl(gh<_i361.Dio>()),
     );
     gh.factory<_i318.AuthCubit>(
       () => _i318.AuthCubit(
         authService: gh<_i272.AuthService>(),
+        connectivity: gh<_i165.ConnectivityService>(),
+      ),
+    );
+    gh.factory<_i711.PushNotificationCubit>(
+      () => _i711.PushNotificationCubit(
+        pushNotificationService: gh<_i579.PushNotificationService>(),
+        deviceTokenService: gh<_i128.DeviceTokenService>(),
         connectivity: gh<_i165.ConnectivityService>(),
       ),
     );

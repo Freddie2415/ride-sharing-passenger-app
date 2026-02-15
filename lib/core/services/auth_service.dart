@@ -10,8 +10,11 @@ abstract class AuthService {
     required String deviceName,
   });
 
-  Future<void> logout();
+  /// Logout current session. If [deviceToken] is provided, the backend
+  /// deactivates that FCM token during logout.
+  Future<void> logout({String? deviceToken});
 
+  /// Logout from all devices. The backend deactivates all device tokens.
   Future<void> logoutAll();
 
   /// Save auth token to secure storage.

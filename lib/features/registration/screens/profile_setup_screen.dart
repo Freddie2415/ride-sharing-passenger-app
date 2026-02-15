@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -7,7 +8,9 @@ import 'package:passenger/app/di/injection.dart';
 import 'package:passenger/app/router/app_router.dart';
 import 'package:passenger/core/constants/app_spacing.dart';
 import 'package:passenger/core/theme/app_colors.dart';
+import 'package:passenger/features/auth/utils/logout_helper.dart';
 import 'package:passenger/core/widgets/widgets.dart';
+import 'package:passenger/features/notifications/cubit/push_notification_cubit.dart';
 import 'package:passenger/features/registration/cubit/registration_cubit.dart';
 
 class ProfileSetupScreen extends StatelessWidget {
@@ -80,12 +83,29 @@ class _ProfileSetupBodyState extends State<_ProfileSetupBody> {
     );
   }
 
+  /// After registration, check if push permission is already granted.
+  /// If yes — register token and go to home. Otherwise show the
+  /// enable-notifications screen.
+  Future<void> _onRegistrationSuccess(BuildContext context) async {
+    final pushCubit = context.read<PushNotificationCubit>();
+    await pushCubit.initialize();
+
+    if (!context.mounted) return;
+
+    if (pushCubit.state.status == PushNotificationStatus.permissionGranted) {
+      unawaited(pushCubit.registerToken());
+      context.go(AppRoutes.home);
+    } else {
+      context.go(AppRoutes.enableNotifications);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<RegistrationCubit, RegistrationState>(
       listener: (context, state) {
         if (state.status == RegistrationStatus.success) {
-          context.go(AppRoutes.home);
+          _onRegistrationSuccess(context);
         } else if (state.status == RegistrationStatus.error) {
           final hasFieldErrors = state.fieldErrors?.isNotEmpty ?? false;
           if (!hasFieldErrors) {
@@ -102,7 +122,7 @@ class _ProfileSetupBodyState extends State<_ProfileSetupBody> {
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.pop(),
+            onPressed: () => performFullLogout(context),
           ),
           title: const Text('Create Account'),
         ),

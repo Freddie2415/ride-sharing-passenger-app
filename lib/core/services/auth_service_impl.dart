@@ -50,9 +50,14 @@ class AuthServiceImpl implements AuthService {
   }
 
   @override
-  Future<void> logout() async {
+  Future<void> logout({String? deviceToken}) async {
     try {
-      await _dio.post<dynamic>('/auth/logout');
+      await _dio.post<dynamic>(
+        '/auth/logout',
+        data: {
+          if (deviceToken != null) 'device_token': deviceToken,
+        },
+      );
     } on DioException catch (e) {
       throw mapDioException(e);
     }

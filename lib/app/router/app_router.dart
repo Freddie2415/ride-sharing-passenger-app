@@ -5,6 +5,7 @@ import 'package:passenger/features/auth/screens/otp_screen.dart'
 import 'package:passenger/features/auth/screens/phone_input_screen.dart';
 import 'package:passenger/features/chats/screens/chats_screen.dart';
 import 'package:passenger/features/home/main_shell.dart';
+import 'package:passenger/features/notifications/screens/enable_notifications_screen.dart';
 import 'package:passenger/features/onboarding/screens/onboarding_screen.dart';
 import 'package:passenger/features/profile/screens/edit_profile_screen.dart';
 import 'package:passenger/features/profile/screens/profile_screen.dart';
@@ -21,6 +22,7 @@ abstract class AppRoutes {
   static const phoneInput = '/phone-input';
   static const otp = '/otp';
   static const profileSetup = '/profile-setup';
+  static const enableNotifications = '/enable-notifications';
   static const home = '/home';
   static const trips = '/home/trips';
   static const chats = '/home/chats';
@@ -70,6 +72,11 @@ class AppRouter {
         path: AppRoutes.profileSetup,
         name: 'profile-setup',
         builder: (context, state) => const ProfileSetupScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.enableNotifications,
+        name: 'enable-notifications',
+        builder: (context, state) => const EnableNotificationsScreen(),
       ),
 
       // Main app with bottom navigation (preserves tab state)

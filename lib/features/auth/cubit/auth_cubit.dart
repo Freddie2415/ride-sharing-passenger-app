@@ -66,8 +66,10 @@ class AuthCubit extends Cubit<AuthState> {
     });
   }
 
-  /// Logout current session.
-  Future<void> logout() => _performLogout(_authService.logout);
+  /// Logout current session. If [deviceToken] is provided, the backend
+  /// deactivates that FCM token during logout.
+  Future<void> logout({String? deviceToken}) =>
+      _performLogout(() => _authService.logout(deviceToken: deviceToken));
 
   /// Logout from all devices.
   Future<void> logoutAll() => _performLogout(_authService.logoutAll);
