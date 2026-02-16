@@ -30,6 +30,9 @@ class _SplashScreenState extends State<SplashScreen> {
     if (!mounted) return;
 
     if (hasToken) {
+      // Mark AuthCubit as authenticated so BlocListener in PassengerApp
+      // sets up push subscriptions and notification badge
+      context.read<AuthCubit>().restoreSession();
       context.go(AppRoutes.home);
     } else {
       context.go(AppRoutes.onboarding);

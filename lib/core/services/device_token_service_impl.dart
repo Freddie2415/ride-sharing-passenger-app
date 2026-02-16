@@ -26,9 +26,9 @@ class DeviceTokenServiceImpl implements DeviceTokenService {
         },
       );
 
-      final body = _asMap(response.data);
-      final data = _asMap(body['data']);
-      final deviceToken = _asMap(data['device_token']);
+      final body = asResponseMap(response.data);
+      final data = asResponseMap(body['data']);
+      final deviceToken = asResponseMap(data['device_token']);
       final id = deviceToken['id'];
       if (id is! int) {
         throw const ApiException(message: 'Invalid token ID in response.');
@@ -47,9 +47,4 @@ class DeviceTokenServiceImpl implements DeviceTokenService {
       throw mapDioException(e);
     }
   }
-}
-
-Map<String, dynamic> _asMap(dynamic value) {
-  if (value is Map<String, dynamic>) return value;
-  throw const ApiException(message: 'Invalid response format.');
 }

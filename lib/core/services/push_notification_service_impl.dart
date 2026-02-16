@@ -157,9 +157,9 @@ class PushNotificationServiceImpl implements PushNotificationService {
   Future<void> dispose() async {
     _disposed = true;
     await _initFuture;
-    _foregroundSub?.cancel();
+    await _foregroundSub?.cancel();
     _foregroundSub = null;
-    _foregroundMessageController.close();
+    await _foregroundMessageController.close();
   }
 }
 

@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import 'package:passenger/core/models/user.dart';
 import 'package:passenger/core/network/api_client.dart';
-import 'package:passenger/core/network/api_exceptions.dart';
 import 'package:passenger/core/services/passenger_service.dart';
 
 @LazySingleton(as: PassengerService)
@@ -82,18 +81,13 @@ class PassengerServiceImpl implements PassengerService {
 }
 
 User _parseUserResponse(dynamic responseData) {
-  final body = _asMap(responseData);
-  final data = _asMap(body['data']);
-  return User.fromJson(_asMap(data['user']));
+  final body = asResponseMap(responseData);
+  final data = asResponseMap(body['data']);
+  return User.fromJson(asResponseMap(data['user']));
 }
 
 void _addFieldIfNotNull(FormData formData, String key, String? value) {
   if (value != null) {
     formData.fields.add(MapEntry(key, value));
   }
-}
-
-Map<String, dynamic> _asMap(dynamic value) {
-  if (value is Map<String, dynamic>) return value;
-  throw const ApiException(message: 'Invalid response format.');
 }

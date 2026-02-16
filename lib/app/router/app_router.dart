@@ -6,6 +6,7 @@ import 'package:passenger/features/auth/screens/phone_input_screen.dart';
 import 'package:passenger/features/chats/screens/chats_screen.dart';
 import 'package:passenger/features/home/main_shell.dart';
 import 'package:passenger/features/notifications/screens/enable_notifications_screen.dart';
+import 'package:passenger/features/notifications/screens/notifications_screen.dart';
 import 'package:passenger/features/onboarding/screens/onboarding_screen.dart';
 import 'package:passenger/features/profile/screens/edit_profile_screen.dart';
 import 'package:passenger/features/profile/screens/profile_screen.dart';
@@ -27,6 +28,7 @@ abstract class AppRoutes {
   static const trips = '/home/trips';
   static const chats = '/home/chats';
   static const profile = '/home/profile';
+  static const notifications = '/notifications';
   static const editProfile = '/home/profile/edit';
   static const settings = '/home/profile/settings';
 }
@@ -34,10 +36,10 @@ abstract class AppRoutes {
 class AppRouter {
   AppRouter._();
 
-  static final _rootNavigatorKey = GlobalKey<NavigatorState>();
+  static final navigatorKey = GlobalKey<NavigatorState>();
 
   static final GoRouter router = GoRouter(
-    navigatorKey: _rootNavigatorKey,
+    navigatorKey: navigatorKey,
     initialLocation: AppRoutes.splash,
     routes: [
       GoRoute(
@@ -77,6 +79,13 @@ class AppRouter {
         path: AppRoutes.enableNotifications,
         name: 'enable-notifications',
         builder: (context, state) => const EnableNotificationsScreen(),
+      ),
+
+      GoRoute(
+        path: AppRoutes.notifications,
+        name: 'notifications',
+        parentNavigatorKey: navigatorKey,
+        builder: (context, state) => const NotificationsScreen(),
       ),
 
       // Main app with bottom navigation (preserves tab state)
@@ -121,13 +130,13 @@ class AppRouter {
                   GoRoute(
                     path: 'edit',
                     name: 'edit-profile',
-                    parentNavigatorKey: _rootNavigatorKey,
+                    parentNavigatorKey: navigatorKey,
                     builder: (context, state) => const EditProfileScreen(),
                   ),
                   GoRoute(
                     path: 'settings',
                     name: 'settings',
-                    parentNavigatorKey: _rootNavigatorKey,
+                    parentNavigatorKey: navigatorKey,
                     builder: (context, state) => const SettingsScreen(),
                   ),
                 ],

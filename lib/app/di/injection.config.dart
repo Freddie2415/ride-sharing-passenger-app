@@ -21,6 +21,9 @@ import 'package:passenger/core/services/auth_service_impl.dart' as _i931;
 import 'package:passenger/core/services/device_token_service.dart' as _i128;
 import 'package:passenger/core/services/device_token_service_impl.dart'
     as _i831;
+import 'package:passenger/core/services/notification_service.dart' as _i308;
+import 'package:passenger/core/services/notification_service_impl.dart'
+    as _i887;
 import 'package:passenger/core/services/passenger_service.dart' as _i197;
 import 'package:passenger/core/services/passenger_service_impl.dart' as _i903;
 import 'package:passenger/core/services/push_notification_service.dart'
@@ -28,6 +31,8 @@ import 'package:passenger/core/services/push_notification_service.dart'
 import 'package:passenger/core/services/push_notification_service_impl.dart'
     as _i751;
 import 'package:passenger/features/auth/cubit/auth_cubit.dart' as _i318;
+import 'package:passenger/features/notifications/cubit/notifications_cubit.dart'
+    as _i58;
 import 'package:passenger/features/notifications/cubit/push_notification_cubit.dart'
     as _i711;
 import 'package:passenger/features/profile/cubit/profile_cubit.dart' as _i33;
@@ -76,6 +81,16 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i128.DeviceTokenService>(
       () => _i831.DeviceTokenServiceImpl(gh<_i361.Dio>()),
+    );
+    gh.lazySingleton<_i308.NotificationService>(
+      () => _i887.NotificationServiceImpl(gh<_i361.Dio>()),
+    );
+    gh.factory<_i58.NotificationsCubit>(
+      () => _i58.NotificationsCubit(
+        notificationService: gh<_i308.NotificationService>(),
+        connectivity: gh<_i165.ConnectivityService>(),
+        pushNotificationService: gh<_i579.PushNotificationService>(),
+      ),
     );
     gh.factory<_i318.AuthCubit>(
       () => _i318.AuthCubit(

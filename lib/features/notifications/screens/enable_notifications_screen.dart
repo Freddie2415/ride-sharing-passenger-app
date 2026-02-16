@@ -19,7 +19,19 @@ class _EnableNotificationsScreenState extends State<EnableNotificationsScreen> {
   Future<void> _onEnable() async {
     final pushCubit = context.read<PushNotificationCubit>();
     await pushCubit.enableAndRegister();
-    if (mounted) context.go(AppRoutes.home);
+    if (!mounted) return;
+
+    if (pushCubit.state.status == PushNotificationStatus.error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(pushCubit.state.errorMessage ?? 'Something went wrong'),
+        ),
+      );
+      return;
+    }
+
+    context.go(AppRoutes.home);
   }
 
   void _onSkip() {

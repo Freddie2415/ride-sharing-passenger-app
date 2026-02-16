@@ -97,12 +97,12 @@ class PushNotificationCubit extends Cubit<PushNotificationState> {
   /// Register the current FCM token with the backend.
   Future<void> registerToken() async {
     final token = await _pushService.getToken();
-    debugPrint('[Push] FCM token: $token');
     if (isClosed || token == null) {
       debugPrint('[Push] Token is null — cannot register. APNs configured?');
       return;
     }
 
+    debugPrint('[Push] FCM token: ...${token.substring(token.length - 6)}');
     await _registerTokenValue(token);
   }
 

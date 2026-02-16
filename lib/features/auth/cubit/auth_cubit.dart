@@ -25,6 +25,13 @@ class AuthCubit extends Cubit<AuthState> {
   /// Check if a stored token exists (for splash screen).
   Future<bool> hasStoredToken() => _authService.hasToken();
 
+  /// Mark the user as authenticated after a successful cold start
+  /// (stored token found). This allows BlocListeners to set up push
+  /// subscriptions and notification badge.
+  void restoreSession() {
+    emit(state.copyWith(status: AuthStatus.authenticated));
+  }
+
   /// Send OTP to phone number.
   Future<void> sendOtp(String phone) async {
     await _withErrorHandling(() async {

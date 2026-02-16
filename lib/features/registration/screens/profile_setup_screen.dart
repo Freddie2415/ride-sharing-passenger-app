@@ -8,8 +8,8 @@ import 'package:passenger/app/di/injection.dart';
 import 'package:passenger/app/router/app_router.dart';
 import 'package:passenger/core/constants/app_spacing.dart';
 import 'package:passenger/core/theme/app_colors.dart';
-import 'package:passenger/features/auth/utils/logout_helper.dart';
 import 'package:passenger/core/widgets/widgets.dart';
+import 'package:passenger/features/auth/utils/logout_helper.dart';
 import 'package:passenger/features/notifications/cubit/push_notification_cubit.dart';
 import 'package:passenger/features/registration/cubit/registration_cubit.dart';
 

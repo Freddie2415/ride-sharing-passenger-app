@@ -10,7 +10,7 @@ import 'package:passenger/core/network/auth_interceptor.dart';
 /// Falls back to localhost for development.
 const String apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'http://localhost:80/api/v1',
+  defaultValue: 'https://mydemoapp.cc/api/v1',
 );
 
 Dio createDioClient({required FlutterSecureStorage storage}) {
@@ -103,6 +103,13 @@ ApiException _mapStatusCode(DioException e) {
     default:
       return ApiException(message: message, statusCode: statusCode);
   }
+}
+
+/// Safely casts response data to [Map<String, dynamic>].
+/// Throws [ApiException] if the value is not a valid JSON map.
+Map<String, dynamic> asResponseMap(dynamic value) {
+  if (value is Map<String, dynamic>) return value;
+  throw const ApiException(message: 'Invalid response format.');
 }
 
 /// Parse API error response `errors` field into a typed map.

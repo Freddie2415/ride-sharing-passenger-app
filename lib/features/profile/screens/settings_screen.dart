@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:passenger/app/router/app_router.dart';
 import 'package:passenger/core/constants/app_spacing.dart';
 import 'package:passenger/core/theme/app_colors.dart';
-import 'package:passenger/features/auth/utils/logout_helper.dart';
 import 'package:passenger/features/auth/cubit/auth_cubit.dart';
+import 'package:passenger/features/auth/utils/logout_helper.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});

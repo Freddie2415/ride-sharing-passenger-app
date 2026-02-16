@@ -6,8 +6,8 @@ import 'package:passenger/app/router/app_router.dart';
 import 'package:passenger/core/constants/app_spacing.dart';
 import 'package:passenger/core/models/user.dart';
 import 'package:passenger/core/theme/app_colors.dart';
-import 'package:passenger/features/auth/utils/logout_helper.dart';
 import 'package:passenger/features/auth/cubit/auth_cubit.dart';
+import 'package:passenger/features/auth/utils/logout_helper.dart';
 import 'package:passenger/features/profile/cubit/profile_cubit.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -215,22 +215,26 @@ class _ProfileHeader extends StatelessWidget {
           ),
           child: switch (user.avatar) {
             final avatarUrl? => ClipOval(
-                child: CachedNetworkImage(
-                  imageUrl: avatarUrl,
-                  fit: BoxFit.cover,
-                  placeholder: (_, _) => const Icon(
-                    Icons.person,
-                    size: 50,
-                    color: AppColors.gray400,
-                  ),
-                  errorWidget: (_, _, _) => const Icon(
-                    Icons.person,
-                    size: 50,
-                    color: AppColors.gray400,
-                  ),
+              child: CachedNetworkImage(
+                imageUrl: avatarUrl,
+                fit: BoxFit.cover,
+                placeholder: (_, _) => const Icon(
+                  Icons.person,
+                  size: 50,
+                  color: AppColors.gray400,
+                ),
+                errorWidget: (_, _, _) => const Icon(
+                  Icons.person,
+                  size: 50,
+                  color: AppColors.gray400,
                 ),
               ),
-            null => const Icon(Icons.person, size: 50, color: AppColors.gray400),
+            ),
+            null => const Icon(
+              Icons.person,
+              size: 50,
+              color: AppColors.gray400,
+            ),
           },
         ),
         const SizedBox(height: AppSpacing.lg),
@@ -261,6 +265,7 @@ class _ProfileMenuItem extends StatelessWidget {
     this.iconColor,
     this.showArrow = true,
   });
+
   final IconData icon;
   final String title;
   final VoidCallback onTap;
