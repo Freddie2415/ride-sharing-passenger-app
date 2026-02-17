@@ -1,12 +1,15 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:passenger/app/router/app_router.dart';
 import 'package:passenger/core/constants/app_spacing.dart';
+import 'package:passenger/core/constants/app_urls.dart';
 import 'package:passenger/core/constants/error_messages.dart';
 import 'package:passenger/core/theme/app_colors.dart';
 import 'package:passenger/core/utils/phone_utils.dart';
+import 'package:passenger/core/utils/url_utils.dart';
 import 'package:passenger/core/widgets/widgets.dart';
 import 'package:passenger/features/auth/cubit/auth_cubit.dart';
 import 'package:passenger/features/auth/screens/otp_screen.dart';
@@ -134,42 +137,75 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 // Terms and Privacy
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.lg,
-                    ),
-                    child: RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.gray500,
-                        ),
-                        children: const [
-                          TextSpan(text: 'By continuing, you agree to our '),
-                          TextSpan(
-                            text: 'Terms of Service',
-                            style: TextStyle(
-                              color: AppColors.primary600,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          TextSpan(text: ' & '),
-                          TextSpan(
-                            text: 'Privacy Policy',
-                            style: TextStyle(
-                              color: AppColors.primary600,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                const _LegalDisclaimer(),
                 const SizedBox(height: AppSpacing.xxl),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LegalDisclaimer extends StatefulWidget {
+  const _LegalDisclaimer();
+
+  @override
+  State<_LegalDisclaimer> createState() => _LegalDisclaimerState();
+}
+
+class _LegalDisclaimerState extends State<_LegalDisclaimer> {
+  late final TapGestureRecognizer _termsRecognizer;
+  late final TapGestureRecognizer _privacyRecognizer;
+
+  @override
+  void initState() {
+    super.initState();
+    _termsRecognizer = TapGestureRecognizer()
+      ..onTap = () => openUrl(AppUrls.termsOfService);
+    _privacyRecognizer = TapGestureRecognizer()
+      ..onTap = () => openUrl(AppUrls.privacyPolicy);
+  }
+
+  @override
+  void dispose() {
+    _termsRecognizer.dispose();
+    _privacyRecognizer.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        child: RichText(
+          textAlign: TextAlign.center,
+          text: TextSpan(
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.gray500,
+            ),
+            children: [
+              const TextSpan(text: 'By continuing, you agree to our '),
+              TextSpan(
+                text: 'Terms of Service',
+                style: const TextStyle(
+                  color: AppColors.primary600,
+                  fontWeight: FontWeight.w500,
+                ),
+                recognizer: _termsRecognizer,
+              ),
+              const TextSpan(text: ' & '),
+              TextSpan(
+                text: 'Privacy Policy',
+                style: const TextStyle(
+                  color: AppColors.primary600,
+                  fontWeight: FontWeight.w500,
+                ),
+                recognizer: _privacyRecognizer,
+              ),
+            ],
           ),
         ),
       ),
