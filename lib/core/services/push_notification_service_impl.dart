@@ -42,12 +42,18 @@ class PushNotificationServiceImpl implements PushNotificationService {
     try {
       const androidSettings =
           AndroidInitializationSettings('@mipmap/ic_launcher');
-      const darwinSettings = DarwinInitializationSettings();
+      // Disable auto-requesting permissions — handled by PushNotificationCubit
+      // via FirebaseMessaging.requestPermission() at the right UX moment.
+      const darwinSettings = DarwinInitializationSettings(
+        requestAlertPermission: false,
+        requestSoundPermission: false,
+        requestBadgePermission: false,
+      );
       const settings = InitializationSettings(
         android: androidSettings,
         iOS: darwinSettings,
       );
-      await _localNotifications.initialize(settings);
+      await _localNotifications.initialize(settings: settings);
       debugPrint('$_tag Local notifications plugin initialized');
 
       // Create the Android notification channel
@@ -133,10 +139,10 @@ class PushNotificationServiceImpl implements PushNotificationService {
         '${notification.title} / ${notification.body}');
     try {
       await _localNotifications.show(
-        notification.hashCode,
-        notification.title,
-        notification.body,
-        NotificationDetails(
+        id: notification.hashCode,
+        title: notification.title,
+        body: notification.body,
+        notificationDetails: NotificationDetails(
           android: AndroidNotificationDetails(
             _androidChannel.id,
             _androidChannel.name,
